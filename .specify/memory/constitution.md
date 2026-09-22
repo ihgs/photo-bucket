@@ -1,50 +1,110 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: (template) → 1.0.0
+- Modified principles: 初版のためなし（テンプレートのプレースホルダーを具体化）
+  - [PRINCIPLE_1_NAME] → I. ローカルファースト & プライバシー
+  - [PRINCIPLE_2_NAME] → II. 静的ホスティング前提 (GitHub Pages)
+  - [PRINCIPLE_3_NAME] → III. オフライン対応 PWA
+  - [PRINCIPLE_4_NAME] → IV. モバイルファースト & アクセシビリティ
+  - [PRINCIPLE_5_NAME] → V. シンプルさ & 最小依存
+- Added sections: VI. データの可搬性と画像出力の忠実性, 技術的制約, 開発ワークフローと品質ゲート
+- Removed sections: なし
+- Templates requiring updates: なし（依存テンプレートは実行時に本憲章を参照する）
+- Follow-up TODOs: なし
+-->
+
+# Photo Bucket Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. ローカルファースト & プライバシー
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+- ユーザーが入力したバケットリスト項目と写真は、端末内（IndexedDB 等のブラウザストレージ）にのみ
+  保存しなければならない (MUST)。
+- 写真やリスト内容を外部サーバーへ送信してはならない (MUST NOT)。アナリティクス、トラッキング、
+  外部 API 呼び出しを導入する場合は、本憲章の改定を必要とする。
+- 写真の EXIF 位置情報など、意図せず個人情報を含むメタデータは、最終出力画像に含めてはならない (MUST NOT)。
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: 個人的な思い出の写真を扱うため、バックエンドを持たずに信頼を確保する。
+GitHub Pages にはサーバー側処理がなく、ローカル保存が構成上も自然である。
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. 静的ホスティング前提 (GitHub Pages)
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+- アプリは静的ファイル（HTML/CSS/JS/アセット）のみで完結しなければならない (MUST)。
+  サーバーサイド実行環境、データベース、認証サーバーに依存してはならない (MUST NOT)。
+- すべてのパスはサブパス配信（`https://<user>.github.io/<repo>/`）で動作するよう、
+  相対パスまたは設定可能なベースパスを使わなければならない (MUST)。
+- デプロイは GitHub Actions 等による再現可能なビルド成果物から行わなければならない (MUST)。
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: 公開先が GitHub Pages に決まっているため、その制約内で動くことを設計の前提とする。
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. オフライン対応 PWA
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+- Web App Manifest と Service Worker を備え、ホーム画面へインストール可能でなければならない (MUST)。
+- 初回読み込み後は、ネットワークなしでリスト閲覧・編集・写真追加・画像保存の全機能が
+  動作しなければならない (MUST)。
+- Service Worker の更新時は、ユーザーデータを失わずに新バージョンへ移行しなければならない (MUST)。
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+**Rationale**: 旅先や飲食店など、通信環境が不安定な場所で達成した瞬間に写真を貼る利用が中心となる。
+
+### IV. モバイルファースト & アクセシビリティ
+
+- UI はスマートフォン縦画面（幅 360px 程度）を基準に設計し、タブレット・デスクトップでも
+  破綻してはならない (MUST)。
+- 写真の追加はカメラ撮影とライブラリ選択の両方に対応しなければならない (MUST)。
+- タップ領域、コントラスト、代替テキスト、キーボード操作は WCAG 2.1 AA 相当を目標とする (SHOULD)。
+
+**Rationale**: 主な利用シーンは「達成したその場でスマホから写真を貼る」ことである。
+
+### V. シンプルさ & 最小依存
+
+- 機能は実際のユーザー価値が示されたものだけを実装する (YAGNI) (MUST)。
+- ランタイム依存ライブラリは、ブラウザ標準 API（Canvas, IndexedDB, File API 等）で
+  妥当に代替できない場合に限り追加する (MUST)。追加時は理由を plan に記録する。
+- 初回読み込みのバンドルサイズを小さく保ち、低速回線でも実用的に起動できること (SHOULD)。
+
+**Rationale**: 小規模な個人向けアプリであり、保守負担と攻撃面を最小化する。
+
+### VI. データの可搬性と画像出力の忠実性
+
+- グリッドサイズ（例: 3×3, 4×4, 5×5）は設定可能とし、データモデルは特定サイズに固定しては
+  ならない (MUST NOT)。
+- 最終的な「一枚の写真」出力は、画面上のグリッド表示（配置、テキスト、達成状態、写真の切り抜き）と
+  一致しなければならない (MUST)。出力は PNG または JPEG で端末に保存・共有できること (MUST)。
+- ユーザーはバケットリスト全体（項目と写真）をファイルとしてエクスポート／インポートできること
+  (SHOULD)。ブラウザのストレージ消去によるデータ喪失への備えとする。
+- 保存データのスキーマにはバージョン番号を持たせ、変更時はマイグレーションを提供しなければならない (MUST)。
+
+**Rationale**: 最終成果物は一枚の画像であり、その品質がアプリの価値そのものである。
+ローカル保存のみであるため、ユーザー自身がデータを持ち出せる手段が必要である。
+
+## 技術的制約
+
+- 対象ブラウザ: 最新の iOS Safari、Android Chrome、デスクトップ Chrome / Edge / Safari / Firefox。
+- ストレージ: 写真は Blob として IndexedDB に保存し、表示・出力前に適切な解像度へ縮小して
+  ストレージ容量を節約する。容量超過時はユーザーに明示的に通知する。
+- 画像合成: Canvas API でクライアント側で行う。外部画像変換サービスを使ってはならない。
+- セキュリティ: ユーザー入力テキストは描画時に必ずエスケープし、`innerHTML` への直接挿入を禁止する。
+- 言語: UI の第一言語は日本語とする。
+
+## 開発ワークフローと品質ゲート
+
+- 機能は Spec Kit のフロー（specify → clarify → plan → tasks → implement）で進める。
+- plan 段階で本憲章の各原則への適合を確認する「Constitution Check」を必ず通過する。
+  違反する場合は Complexity Tracking に理由と代替案の却下理由を記録する。
+- 以下は自動テストで担保しなければならない: データモデルとスキーマ移行、グリッド画像出力のロジック、
+  ストレージの保存・読み込み。
+- マージ前に、本番ビルドを GitHub Pages 相当のサブパスで配信し、オフライン動作と
+  インストール可能性を確認する。
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+- 本憲章は他のすべての開発慣行に優先する。spec / plan / tasks およびレビューは本憲章への適合を確認する。
+- 改定は、変更内容・理由・影響範囲を記したコミット（または PR）で行い、Sync Impact Report を添える。
+- バージョニングはセマンティックバージョニングに従う:
+  - MAJOR: 原則の削除または後方互換性のない再定義
+  - MINOR: 原則・セクションの追加、または指針の実質的な拡張
+  - PATCH: 文言の明確化、誤字修正など意味を変えない修正
+- 原則からの逸脱が必要な場合は、plan に正当化を記録し、恒久的な逸脱であれば憲章を改定する。
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-22
