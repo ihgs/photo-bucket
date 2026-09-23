@@ -1,18 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: (template) → 1.0.0
-- Modified principles: 初版のためなし（テンプレートのプレースホルダーを具体化）
-  - [PRINCIPLE_1_NAME] → I. ローカルファースト & プライバシー
-  - [PRINCIPLE_2_NAME] → II. 静的ホスティング前提 (GitHub Pages)
-  - [PRINCIPLE_3_NAME] → III. オフライン対応 PWA
-  - [PRINCIPLE_4_NAME] → IV. モバイルファースト & アクセシビリティ
-  - [PRINCIPLE_5_NAME] → V. シンプルさ & 最小依存
-- Added sections: VI. データの可搬性と画像出力の忠実性, 技術的制約, 開発ワークフローと品質ゲート
-- Removed sections: なし
-- Templates requiring updates: なし（依存テンプレートは実行時に本憲章を参照する）
-- Follow-up TODOs: なし
--->
-
 # Photo Bucket Constitution
 
 ## Core Principles
@@ -80,7 +65,8 @@ GitHub Pages にはサーバー側処理がなく、ローカル保存が構成�
 
 ## 技術的制約
 
-- 対象ブラウザ: 最新の iOS Safari、Android Chrome、デスクトップ Chrome / Edge / Safari / Firefox。
+- 対象ブラウザ: 最新の iOS Safari、Android Chrome、デスクトップ Chrome / Edge / Safari。
+  Firefox は対象外とする（動作保証・テストを行わない）。
 - ストレージ: 写真は Blob として IndexedDB に保存し、表示・出力前に適切な解像度へ縮小して
   ストレージ容量を節約する。容量超過時はユーザーに明示的に通知する。
 - 画像合成: Canvas API でクライアント側で行う。外部画像変換サービスを使ってはならない。
@@ -107,4 +93,4 @@ GitHub Pages にはサーバー側処理がなく、ローカル保存が構成�
   - PATCH: 文言の明確化、誤字修正など意味を変えない修正
 - 原則からの逸脱が必要な場合は、plan に正当化を記録し、恒久的な逸脱であれば憲章を改定する。
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-22
+**Version**: 1.1.0 | **Ratified**: 2026-09-22 | **Last Amended**: 2026-09-23
