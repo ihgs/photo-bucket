@@ -213,6 +213,11 @@ textarea {
 }
 
 /* ---- dialogs & sheets ---- */
+/* The page behind a sheet must not scroll, or iOS moves it while typing (#3). */
+.modal-open,
+.modal-open body {
+  overflow: hidden;
+}
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -241,8 +246,10 @@ textarea {
 .sheet {
   width: 100%;
   max-width: 720px;
-  max-height: 92dvh;
+  /* % of the backdrop, which follows the visual viewport while the keyboard is open (#3) */
+  max-height: 92%;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--surface);
   border-radius: 16px 16px 0 0;
   padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
