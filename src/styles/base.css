@@ -407,6 +407,15 @@ textarea {
   border-radius: 50%;
   background: currentColor;
 }
+.cell-view-heading {
+  margin-bottom: 8px;
+}
+.cell-view-title {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
 .chip {
   min-height: 44px;
   padding: 6px 14px;

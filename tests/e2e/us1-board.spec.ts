@@ -39,8 +39,18 @@ test("US1: create a 3×4 board, write items, and keep them after reload", async 
   await expect(page.getByRole("button", { name: /^京都旅行/ })).toBeVisible();
   await page.getByRole("button", { name: /^京都旅行/ }).click();
 
-  // delete the item
+  // an existing item opens read-only; the pencil button opens the form
   await cell(page, 1, 3).click();
+  await expect(page.getByRole("dialog")).toContainText("京都で抹茶パフェを食べる");
+  await expect(page.getByLabel("やりたいこと", { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "やりたいこととカテゴリを編集" }).click();
+  await page.getByLabel("やりたいこと", { exact: true }).fill("京都で抹茶パフェを2杯食べる");
+  await page.getByRole("button", { name: "完了" }).click();
+  await expect(page.getByRole("dialog")).toContainText("京都で抹茶パフェを2杯食べる");
+  await expect(cell(page, 1, 3)).toHaveAttribute("aria-label", /京都で抹茶パフェを2杯食べる/);
+
+  // delete the item
+  await page.getByRole("button", { name: "やりたいこととカテゴリを編集" }).click();
   await page.getByRole("button", { name: "項目を削除" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "削除" }).click();
   await expect(cell(page, 1, 3)).toHaveAttribute("aria-label", "1行3列 空きマス");
