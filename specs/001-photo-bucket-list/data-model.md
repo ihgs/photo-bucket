@@ -89,10 +89,15 @@ Board の `cells` 配列の要素。
 |---|---|---|---|
 | `id` | string (UUID v4) | ✓ | |
 | `boardId` | string | ✓ | 所属ボード。インデックス `byBoard` を張り、ボード削除時にまとめて消す |
-| `blob` | Blob (`image/jpeg`) | ✓ | 長辺 1600px 以下に縮小・再エンコード済み。EXIF なし（FR-015） |
+| `blob` | Blob (`image/jpeg`) | ✓ | 長辺 1600px 以下に縮小・再エンコード済み。EXIF なし（FR-015）。保存時は `bytes: ArrayBuffer` と `type` に変換する（下記） |
 | `width` | integer | ✓ | 縮小後の幅（px） |
 | `height` | integer | ✓ | 縮小後の高さ（px） |
-| `thumbBlob` | Blob (`image/jpeg`) | ✓ | 長辺 320px のサムネイル。ボード画面の表示に使う（SC-006） |
+| `thumbBlob` | Blob (`image/jpeg`) | ✓ | 長辺 320px のサムネイル。ボード画面の表示に使う（SC-006）。保存時は `thumbBytes: ArrayBuffer` に変換する |
+
+**保存形式**: Safari はプライベートブラウズ（と Playwright の WebKit）で Blob を IndexedDB に保存できない
+（"Error preparing Blob/File data to be stored in object store"）。そのため `photos` ストアには
+`{ id, boardId, type, bytes: ArrayBuffer, thumbBytes: ArrayBuffer, width, height }` を保存し、読み出し時に Blob に戻す。
+変換（`blob.arrayBuffer()`）はトランザクションを開く前に済ませる（途中で await するとトランザクションが自動で閉じるため）。
 
 ## Preferences（設定）
 

@@ -9,6 +9,7 @@
 
 - Node.js 24 以上、npm（devcontainer に同梱）
 - E2E テスト用ブラウザ: 初回のみ `npx playwright install --with-deps chromium webkit`
+- テスト用の写真の再生成（通常は不要）: `node tests/e2e/fixtures/make-fixtures.mjs`（ImageMagick が必要）
 - 実機確認用: iPhone（iOS Safari）と Android（Chrome）各 1 台。同じネットワークにつなぐ
 
 ## セットアップ

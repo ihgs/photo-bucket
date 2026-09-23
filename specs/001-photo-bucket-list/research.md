@@ -29,10 +29,11 @@ Technical Context の未確定事項と主要な技術選択について、決�
 
 ## R3. 端末内ストレージ
 
-- **Decision**: IndexedDB を `idb`（約 1KB の Promise ラッパー）経由で使う。写真は Blob として
+- **Decision**: IndexedDB を `idb`（約 1KB の Promise ラッパー）経由で使う。写真は ArrayBuffer として
+  （Safari のプライベートブラウズでは Blob を保存できないため。data-model.md「Photo」参照）
   `photos` ストアに、ボード（マスを含む）は `boards` ストアに分けて保存する。起動時に
   `navigator.storage.persist()` を要求し、`navigator.storage.estimate()` で残り容量を確認する。
-- **Rationale**: 写真 Blob を base64 化せずに保存でき容量効率が良い（憲章 I・技術的制約）。
+- **Rationale**: 写真を base64 化せずにバイナリのまま保存でき容量効率が良い（憲章 I・技術的制約）。
   ボードと写真を分けることで、一覧表示時に写真本体を読み込まずに済む（SC-006）。
   `idb` は IndexedDB のイベント API を Promise 化するだけの薄い層で、自前実装よりバグの余地が少ない。
 - **Alternatives considered**:
