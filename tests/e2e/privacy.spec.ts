@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { closeSheet, createBoard, disableWebShare, fillCell, fixturePath } from "./helpers";
+import {
+  closeSheet,
+  createBoard,
+  disableWebShare,
+  fillCell,
+  fixturePath,
+  openExport,
+} from "./helpers";
 
 test("no request leaves the app's own origin during the main flows (constitution I)", async ({
   page,
@@ -16,7 +23,7 @@ test("no request leaves the app's own origin during the main flows (constitution
   await page.getByLabel("ライブラリから選ぶ").setInputFiles(fixturePath("gps-photo.jpg"));
   await expect(page.getByRole("button", { name: "表示範囲を調整" })).toBeVisible();
   await closeSheet(page);
-  await page.getByRole("button", { name: "画像として保存" }).click();
+  await openExport(page);
   await expect(page.locator("img.export-preview")).toBeVisible();
   await Promise.all([
     page.waitForEvent("download"),

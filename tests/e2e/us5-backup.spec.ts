@@ -38,8 +38,11 @@ test("US5: switch boards, back up, delete, restore; a broken file changes nothin
   const backupPath = info.outputPath("backup.photobucket.json");
   writeFileSync(backupPath, readFileSync((await download.path())!));
 
-  // delete one board
-  await page.getByRole("button", { name: "「北海道旅行」を削除" }).click();
+  // the list has no delete buttons; delete one board from its settings (FR-023)
+  await expect(page.getByRole("button", { name: /を削除$/ })).toHaveCount(0);
+  await page.getByRole("button", { name: /^北海道旅行/ }).click();
+  await page.getByRole("button", { name: "ボードの設定" }).click();
+  await page.getByRole("button", { name: "このボードを削除" }).click();
   await expect(page.getByRole("alertdialog")).toContainText("写真 1 枚");
   await page.getByRole("alertdialog").getByRole("button", { name: "削除" }).click();
   await expect(page.locator(".board-item")).toHaveCount(1);

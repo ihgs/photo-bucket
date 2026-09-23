@@ -30,6 +30,17 @@ export const closeSheet = async (page: Page) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 };
 
+/**
+ * Opens the export screen of the board currently shown. The "画像として保存" button only appears
+ * once every cell is achieved (FR-013), so tests that export a partial board go there directly.
+ */
+export const openExport = async (page: Page) => {
+  await page.evaluate(() => {
+    location.hash = `${location.hash.replace(/\/$/, "")}/export`;
+  });
+  await expect(page.getByRole("heading", { level: 1, name: "画像として保存" })).toBeVisible();
+};
+
 /** Makes the export use a plain download instead of the share sheet. */
 export const disableWebShare = async (page: Page) => {
   await page.addInitScript(() => {

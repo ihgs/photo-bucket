@@ -292,3 +292,10 @@ Task: "src/media/importPhoto.ts を実装する"
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+
+## Phase 9: Convergence
+
+- [X] T076 `src/ui/screens/BoardView.tsx` で「画像として保存」ボタンを、達成数が総マス数と等しいときだけ表示する per FR-013, US3/AC5 (contradicts)
+- [X] T077 `src/ui/screens/BoardList.tsx` から各ボードの削除ボタンを取り除く（削除は `BoardDangerZone` の「このボードを削除」のみ） per FR-023, US5/AC5 (contradicts)
+- [X] T078 E2E を更新する: 未達成マスのあるボードを書き出すテスト（us3-export, a11y, privacy, us4-offline）は書き出し画面へ直接遷移し、`tests/e2e/us3-export.spec.ts` に「未達成があるとボタンが出ず、全達成で出る」テストを追加する per US3/AC1, US3/AC5 (partial)
+- [X] T079 `tests/e2e/us5-backup.spec.ts` のボード削除を設定画面経由に変え、一覧に削除ボタンがないことを確かめる per US5/AC4, US5/AC5 (partial)

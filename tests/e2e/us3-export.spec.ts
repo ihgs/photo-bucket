@@ -8,6 +8,7 @@ import {
   disableWebShare,
   fillCell,
   fixturePath,
+  openExport,
   seedFullBoard,
 } from "./helpers";
 import { hasExif, jpegSize } from "./jpeg";
@@ -17,7 +18,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 const exportImage = async (page: Page, includeTitle: boolean) => {
-  await page.getByRole("button", { name: "画像として保存" }).click();
+  await openExport(page);
   const toggle = page.getByRole("checkbox", { name: "タイトルを入れる" });
   if ((await toggle.isChecked()) !== includeTitle) await toggle.click();
   await expect(page.locator("img.export-preview")).toBeVisible();
@@ -125,6 +126,23 @@ test("US3: the exported image matches the screen (SC-004) and has no EXIF", asyn
     },
   );
   for (const d of diffs) expect(d).toBeLessThanOrEqual(8);
+});
+
+test("US3: the save button appears only when every cell is achieved (FR-013)", async ({ page }) => {
+  const saveButton = page.getByRole("button", { name: "画像として保存" });
+  await createBoard(page, "未達成あり", "3×3");
+  await fillCell(page, 1, 1, "海で泳ぐ");
+  await page.getByLabel("ライブラリから選ぶ").setInputFiles(fixturePath("landscape.jpg"));
+  await expect(page.getByRole("button", { name: "表示範囲を調整" })).toBeVisible();
+  await closeSheet(page);
+  await expect(page.getByText("1/9 達成")).toBeVisible();
+  await expect(saveButton).toHaveCount(0);
+
+  const photo = readFileSync(fixturePath("landscape.jpg"));
+  const boardId = await seedFullBoard(page, "全達成", 3, 3, photo);
+  await page.goto(`./#/boards/${boardId}`);
+  await expect(page.getByText("9/9 達成")).toBeVisible();
+  await expect(saveButton).toBeVisible();
 });
 
 test("US3: a 5×5 board with 25 photos is exported within 5 seconds (SC-003)", async ({ page }) => {

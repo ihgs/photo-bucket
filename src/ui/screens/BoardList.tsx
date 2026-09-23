@@ -92,7 +92,7 @@ export const BoardList = () => {
       </div>
       <ul class="board-list">
         {boards.map((b) => (
-          <li key={b.id} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <li key={b.id}>
             <button
               type="button"
               class="board-item"
@@ -105,14 +105,6 @@ export const BoardList = () => {
                   {gridLabel(b.size)}・{countAchieved(b)}/{totalCells(b.size)} 達成
                 </span>
               </span>
-            </button>
-            <button
-              type="button"
-              class="btn btn-ghost"
-              aria-label={`「${b.title}」を削除`}
-              onClick={async () => (await confirmDeleteBoard(b)) && reload()}
-            >
-              🗑
             </button>
           </li>
         ))}
