@@ -67,13 +67,15 @@ export const BoardView = ({ board }: { board: Board }) => {
             <button type="button" class="btn" onClick={() => setMove({ active: true, from: null })}>
               移動
             </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              onClick={() => navigate({ name: "export", boardId: board.id })}
-            >
-              画像として保存
-            </button>
+            {achieved === total && (
+              <button
+                type="button"
+                class="btn btn-primary"
+                onClick={() => navigate({ name: "export", boardId: board.id })}
+              >
+                画像として保存
+              </button>
+            )}
           </span>
         )}
       </div>

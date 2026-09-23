@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { closeSheet, createBoard, disableWebShare, fillCell, fixturePath } from "./helpers";
+import {
+  closeSheet,
+  createBoard,
+  disableWebShare,
+  fillCell,
+  fixturePath,
+  openExport,
+} from "./helpers";
 
 // Service workers are not available in Playwright's WebKit.
 test.skip(({ browserName }) => browserName !== "chromium", "Chromium only");
@@ -37,7 +44,7 @@ test("US4: everything works offline after the first visit (SC-005)", async ({ pa
   await closeSheet(page);
   await expect(page.getByText("1/12 達成")).toBeVisible();
 
-  await page.getByRole("button", { name: "画像として保存" }).click();
+  await openExport(page);
   await expect(page.locator("img.export-preview")).toBeVisible();
   const [download] = await Promise.all([
     page.waitForEvent("download"),

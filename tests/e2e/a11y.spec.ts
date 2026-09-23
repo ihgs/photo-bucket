@@ -1,6 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { closeSheet, createBoard, disableWebShare, fillCell, fixturePath } from "./helpers";
+import {
+  closeSheet,
+  createBoard,
+  disableWebShare,
+  fillCell,
+  fixturePath,
+  openExport,
+} from "./helpers";
 
 const check = async (page: Page, name: string) => {
   const results = await new AxeBuilder({ page })
@@ -35,7 +42,7 @@ test("no serious accessibility violations on any screen", async ({ page }) => {
   await closeSheet(page);
   await check(page, "board");
 
-  await page.getByRole("button", { name: "画像として保存" }).click();
+  await openExport(page);
   await expect(page.locator("img.export-preview")).toBeVisible();
   await check(page, "export");
   await page.getByRole("button", { name: "ボードへ戻る" }).click();
