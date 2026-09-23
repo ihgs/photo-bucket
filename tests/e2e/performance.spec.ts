@@ -1,17 +1,12 @@
-import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
-import { seedFullBoard } from "./helpers";
+import { fixturePath, seedFullBoard } from "./helpers";
 
 test("SC-006: a board with 25 photos is shown within 2 seconds even with 3 such boards", async ({
   page,
 }) => {
-  const photo = execFileSync(
-    "convert",
-    ["-size", "1600x1200", "plasma:", "-quality", "85", "jpg:-"],
-    {
-      maxBuffer: 20 * 1024 * 1024,
-    },
-  );
+  // A realistic 1600×1200 photo, as stored after import.
+  const photo = readFileSync(fixturePath("large-photo.jpg"));
   const ids = [];
   for (let i = 1; i <= 3; i++) ids.push(await seedFullBoard(page, `ボード${i}`, 5, 5, photo));
 

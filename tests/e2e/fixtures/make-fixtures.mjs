@@ -59,5 +59,8 @@ make("landscape.jpg", "900x600", [
   "-fill", "#1f8a4c", "-draw", "rectangle 0,0 450,600",
 ]);
 
+// Realistic 1600×1200 photo, the size stored after import. Used by the performance tests.
+make("large-photo.jpg", "1600x1200", ["-seed", "42", "plasma:"]);
+
 writeFileSync(join(dir, "not-an-image.txt"), "this is not an image\n");
 console.log("fixtures written");
