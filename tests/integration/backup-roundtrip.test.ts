@@ -27,7 +27,7 @@ const seed = async () => {
   a = (await getBoard(a.id))!;
   a = await saveBoard({
     ...a,
-    cells: a.cells.map((c) => (c.photoId ? { ...c, crop: { cx: 0.4, cy: 0.6, zoom: 1.5 } } : c)),
+    cells: a.cells.map((c) => (c.photoId ? { ...c, crop: { cx: 0.4, cy: 0.6, zoom: 1.5, rotation: 90 } } : c)),
   });
   let b = await createBoard("正方形", { cols: 5, rows: 5 });
   b = await saveBoard(upsertCell(b, 4, 4, { title: "オーロラ", category: "want" }));

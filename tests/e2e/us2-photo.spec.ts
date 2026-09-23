@@ -65,6 +65,7 @@ test("US2: adjust the visible area and replace the photo", async ({ page }) => {
   await page.getByRole("button", { name: "表示範囲を調整" }).click();
   const zoom = page.getByRole("slider", { name: /拡大率/ });
   await zoom.fill("2");
+  await page.getByRole("button", { name: "90°回転" }).click();
   await page.getByRole("button", { name: "完了" }).click();
   await expect(page.getByRole("button", { name: "表示範囲を調整" })).toBeVisible();
 
@@ -73,13 +74,16 @@ test("US2: adjust the visible area and replace the photo", async ({ page }) => {
       const r = indexedDB.open("photo-bucket");
       r.onsuccess = () => res(r.result);
     });
-    const boards: { cells: { crop?: { zoom: number } }[] }[] = await new Promise((res) => {
-      const req = db.transaction("boards").objectStore("boards").getAll();
-      req.onsuccess = () => res(req.result);
-    });
+    const boards: { cells: { crop?: { zoom: number; rotation?: number } }[] }[] = await new Promise(
+      (res) => {
+        const req = db.transaction("boards").objectStore("boards").getAll();
+        req.onsuccess = () => res(req.result);
+      },
+    );
     return boards[0].cells[0].crop;
   });
   expect(crop?.zoom).toBeCloseTo(2, 5);
+  expect(crop?.rotation).toBe(90);
 
   await page.getByLabel("写真を差し替える").setInputFiles(fixture("gps-photo.jpg"));
   await closeSheet(page);

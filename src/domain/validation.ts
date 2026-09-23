@@ -1,5 +1,6 @@
 import { isInside, isValidGridSize } from "./grid";
-import { CATEGORIES } from "./types";
+import { ROTATIONS } from "./crop";
+import { CATEGORIES, type Rotation } from "./types";
 
 export const BOARD_TITLE_MAX = 40;
 export const CELL_TITLE_MAX = 60;
@@ -92,7 +93,8 @@ export const validateBoard = (value: unknown): string[] => {
         !isObject(crop) ||
         !inRange(crop.cx, 0, 1) ||
         !inRange(crop.cy, 0, 1) ||
-        !inRange(crop.zoom, 1, 4)
+        !inRange(crop.zoom, 1, 4) ||
+        (crop.rotation !== undefined && !ROTATIONS.includes(crop.rotation as Rotation))
       )
         errors.push(`${where}の表示範囲が正しくありません`);
       if (!isString(cell.achievedAt)) errors.push(`${where}の達成日がありません`);
