@@ -44,3 +44,41 @@ describe("CellSheet photo import", () => {
     expect((await getBoard(board.id))?.cells[0].photoId).toBeUndefined();
   });
 });
+
+describe("CellSheet on a small visual viewport (#3)", () => {
+  const listeners: Record<string, () => void> = {};
+  const vv = {
+    offsetTop: 0,
+    height: 800,
+    addEventListener: (type: string, fn: () => void) => (listeners[type] = fn),
+    removeEventListener: (type: string) => delete listeners[type],
+  };
+  let original: VisualViewport | null;
+  beforeEach(() => {
+    original = window.visualViewport;
+    Object.defineProperty(window, "visualViewport", { value: vv, configurable: true });
+  });
+  afterEach(() => {
+    Object.defineProperty(window, "visualViewport", { value: original, configurable: true });
+  });
+
+  it("keeps the sheet inside the visible area and locks the page while open", async () => {
+    const board = await createBoard("A", { cols: 3, rows: 3 });
+    currentBoard.value = board;
+    const { container, unmount } = render(<CellSheet board={board} row={0} col={0} />);
+    const backdrop = container.querySelector(".modal-backdrop") as HTMLElement;
+    expect(backdrop.style.height).toBe("800px");
+    expect(document.documentElement.classList.contains("modal-open")).toBe(true);
+
+    // the keyboard opens: the visible area shrinks and is scrolled down
+    vv.height = 420;
+    vv.offsetTop = 120;
+    listeners.resize();
+    expect(backdrop.style.top).toBe("120px");
+    expect(backdrop.style.height).toBe("420px");
+
+    unmount();
+    expect(document.documentElement.classList.contains("modal-open")).toBe(false);
+    expect(listeners.resize).toBeUndefined();
+  });
+});

@@ -6,6 +6,7 @@ import { CELL_TITLE_MAX, MEMO_MAX, validateCellInput } from "../../domain/valida
 import { confirm } from "../components/ConfirmDialog";
 import { removeCell, upsertCell } from "../state/boardStore";
 import { useDebounced } from "../useDebounced";
+import { useVisualViewport } from "../useVisualViewport";
 import { PhotoSection } from "./PhotoSection";
 
 interface Props {
@@ -21,6 +22,7 @@ export const CellSheet = ({ board, row, col }: Props) => {
   const [memo, setMemo] = useState(cell?.memo ?? "");
   const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
+  const backdropRef = useVisualViewport<HTMLDivElement>();
 
   useEffect(() => {
     if (!cell) titleRef.current?.focus();
@@ -52,7 +54,7 @@ export const CellSheet = ({ board, row, col }: Props) => {
   };
 
   return (
-    <div class="modal-backdrop" onClick={close}>
+    <div class="modal-backdrop" ref={backdropRef} onClick={close}>
       <section
         class="sheet"
         role="dialog"
