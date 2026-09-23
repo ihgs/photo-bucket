@@ -129,14 +129,7 @@ test("US3: the exported image matches the screen (SC-004) and has no EXIF", asyn
 
 test("US3: a 5×5 board with 25 photos is exported within 5 seconds (SC-003)", async ({ page }) => {
   // A realistic 1600×1200 photo, as stored after import.
-  const { execFileSync } = await import("node:child_process");
-  const photo = execFileSync(
-    "convert",
-    ["-size", "1600x1200", "plasma:", "-quality", "85", "jpg:-"],
-    {
-      maxBuffer: 20 * 1024 * 1024,
-    },
-  );
+  const photo = readFileSync(fixturePath("large-photo.jpg"));
   const boardId = await seedFullBoard(page, "25枚", 5, 5, photo);
   await page.goto(`./#/boards/${boardId}`);
   await expect(page.getByText("25/25 達成")).toBeVisible();
