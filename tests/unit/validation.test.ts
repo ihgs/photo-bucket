@@ -69,6 +69,15 @@ describe("board validation", () => {
     b.cells[0].achievedAt = "2026-01-02T00:00:00.000Z";
     expect(validateBoard(b)).toEqual([]);
   });
+  it("accepts only quarter-turn rotations", () => {
+    const b = validBoard();
+    b.cells[0].photoId = "p1";
+    b.cells[0].achievedAt = "2026-01-02T00:00:00.000Z";
+    b.cells[0].crop = { cx: 0.5, cy: 0.5, zoom: 1, rotation: 270 };
+    expect(validateBoard(b)).toEqual([]);
+    (b.cells[0].crop as { rotation: number }).rotation = 45;
+    expect(validateBoard(b).length).toBeGreaterThan(0);
+  });
   it("rejects non-objects", () => {
     expect(validateBoard(null).length).toBeGreaterThan(0);
     expect(validateBoard({ id: 1 }).length).toBeGreaterThan(0);

@@ -1,4 +1,4 @@
-import { DEFAULT_CROP, sourceRect } from "../domain/crop";
+import { DEFAULT_CROP, rotationMatrix, rotationOf, sourceRect } from "../domain/crop";
 import { CELL_BACKGROUND, layoutBoard, type TextBlock } from "../domain/layout";
 import { createCanvasMeasure, fontString, ready } from "../domain/measure";
 import type { Board, GridSize } from "../domain/types";
@@ -97,11 +97,15 @@ export const renderBoard = async (board: Board, opts: RenderOptions): Promise<Bl
     if (c.kind === "done") {
       const b = bitmaps.get(c.cell!.photoId!);
       if (b) {
-        const r = sourceRect(b.width, b.height, c.cell!.crop ?? DEFAULT_CROP);
-        const sx = r.sx * (b.bitmap.width / b.width);
-        const sy = r.sy * (b.bitmap.height / b.height);
-        const side = r.side * (b.bitmap.width / b.width);
-        ctx.drawImage(b.bitmap, sx, sy, side, side, c.x, c.y, c.size, c.size);
+        const crop = c.cell!.crop ?? DEFAULT_CROP;
+        const r = sourceRect(b.width, b.height, crop);
+        const k = c.size / r.side;
+        ctx.save();
+        ctx.translate(c.x - r.sx * k, c.y - r.sy * k);
+        ctx.scale(k, k);
+        ctx.transform(...rotationMatrix(b.width, b.height, rotationOf(crop)));
+        ctx.drawImage(b.bitmap, 0, 0, b.width, b.height);
+        ctx.restore();
       }
       if (c.caption) {
         ctx.fillStyle = c.caption.color;

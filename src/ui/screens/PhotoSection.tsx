@@ -1,11 +1,13 @@
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { reportError } from "../../app/errors";
+import { DEFAULT_CROP, rotateCrop } from "../../domain/crop";
 import type { Board, Cell } from "../../domain/types";
 import { confirm } from "../components/ConfirmDialog";
 import { PhotoInCell } from "../components/PhotoInCell";
 import { formatDate } from "../format";
-import { attachPhoto, detachPhoto } from "../state/boardStore";
+import { attachPhoto, detachPhoto, setCrop } from "../state/boardStore";
+import { usePhotoUrl } from "../usePhotoUrl";
 
 const FileButton = ({
   label,
@@ -55,6 +57,16 @@ export const PhotoSection = ({ board, cell }: { board: Board; cell: Cell }) => {
     }
   };
 
+  const photo = usePhotoUrl(cell.photoId, "thumb");
+  const onRotate = () => {
+    if (!photo) return;
+    void setCrop(
+      cell.row,
+      cell.col,
+      rotateCrop(cell.crop ?? DEFAULT_CROP, photo.width, photo.height),
+    ).catch(reportError);
+  };
+
   const onDetach = async () => {
     const ok = await confirm({
       title: "写真を外しますか？",
@@ -84,6 +96,9 @@ export const PhotoSection = ({ board, cell }: { board: Board; cell: Cell }) => {
               }
             >
               表示範囲を調整
+            </button>
+            <button type="button" class="btn" disabled={busy || !photo} onClick={onRotate}>
+              90°回転
             </button>
             <FileButton label="写真を差し替える" onFile={onFile} disabled={busy} />
             <FileButton label="撮影して差し替える" capture onFile={onFile} disabled={busy} />

@@ -34,7 +34,7 @@
           "category": "eat",             // want | go | eat | other
           "memo": "",
           "photoId": "…",                // 任意
-          "crop": { "cx": 0.5, "cy": 0.4, "zoom": 1.2 },  // photoId があるとき必須
+          "crop": { "cx": 0.5, "cy": 0.4, "zoom": 1.2, "rotation": 90 },  // photoId があるとき必須。rotation は任意（0/90/180/270）
           "achievedAt": "…"              // photoId があるとき必須
         }
       ]

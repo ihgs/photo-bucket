@@ -39,6 +39,7 @@ const pickCell = (c: Cell): Cell => {
   if (c.photoId !== undefined) {
     cell.photoId = c.photoId;
     cell.crop = { cx: c.crop!.cx, cy: c.crop!.cy, zoom: c.crop!.zoom };
+    if (c.crop!.rotation) cell.crop.rotation = c.crop!.rotation;
     cell.achievedAt = c.achievedAt;
   }
   return cell;

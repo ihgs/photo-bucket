@@ -3,6 +3,15 @@ import { THUMB_EDGE } from "../../media/importPhoto";
 import type { Cell } from "../../domain/types";
 import { usePhotoUrl } from "../usePhotoUrl";
 
+/** Inline style that places a photo <img> at the box computed by `imageBox`. */
+export const imageStyle = (box: ReturnType<typeof imageBox>) => ({
+  left: `${box.left}px`,
+  top: `${box.top}px`,
+  width: `${box.width}px`,
+  height: `${box.height}px`,
+  transform: box.rotation ? `rotate(${box.rotation}deg)` : undefined,
+});
+
 const needsFull = (cell: Cell, size: number, w: number, h: number) => {
   const thumbShort = (THUMB_EDGE * Math.min(w, h)) / Math.max(w, h);
   const dpr = typeof devicePixelRatio === "number" ? devicePixelRatio : 1;
@@ -21,17 +30,7 @@ export const PhotoInCell = ({ cell, size }: { cell: Cell; size: number }) => {
   const box = imageBox(src.width, src.height, cell.crop ?? DEFAULT_CROP, size);
   return (
     <div class="photo">
-      <img
-        src={src.url}
-        alt=""
-        draggable={false}
-        style={{
-          left: `${box.left}px`,
-          top: `${box.top}px`,
-          width: `${box.width}px`,
-          height: `${box.height}px`,
-        }}
-      />
+      <img src={src.url} alt="" draggable={false} style={imageStyle(box)} />
     </div>
   );
 };

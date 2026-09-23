@@ -22,11 +22,18 @@ export const CATEGORIES: readonly CategoryInfo[] = [
 export const categoryInfo = (id: Category): CategoryInfo =>
   CATEGORIES.find((c) => c.id === id) ?? CATEGORIES[0];
 
-/** Visible part of a photo inside a square cell. cx/cy: 0..1, zoom: 1..4. */
+/** Clockwise rotation of a photo in degrees. */
+export type Rotation = 0 | 90 | 180 | 270;
+
+/**
+ * Visible part of a photo inside a square cell. cx/cy: 0..1 of the rotated photo, zoom: 1..4.
+ * `rotation` is absent (0) in data saved before rotation existed.
+ */
 export interface Crop {
   cx: number;
   cy: number;
   zoom: number;
+  rotation?: Rotation;
 }
 
 export interface Cell {

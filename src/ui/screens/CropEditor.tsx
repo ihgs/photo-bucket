@@ -6,10 +6,14 @@ import {
   MIN_ZOOM,
   clampCrop,
   imageBox,
+  rotateCrop,
+  rotatedSize,
+  rotationOf,
   sourceRect,
 } from "../../domain/crop";
 import { findCell } from "../../domain/grid";
 import type { Board, Crop } from "../../domain/types";
+import { imageStyle } from "../components/PhotoInCell";
 import { setCrop } from "../state/boardStore";
 import { usePhotoUrl } from "../usePhotoUrl";
 
@@ -49,11 +53,18 @@ export const CropEditor = ({ board, row, col }: Props) => {
   const h = photo?.height ?? 1;
   const update = (next: Crop) => setCropState(clampCrop(next, w, h));
 
+  const rotate = () => setCropState(rotateCrop(crop, w, h));
+
   /** Moves the visible area by a drag of (dx, dy) screen pixels. */
   const panBy = (dx: number, dy: number) => {
     const side = sourceRect(w, h, crop).side;
     const perPx = side / (frameSize || 1);
-    update({ ...crop, cx: crop.cx - (dx * perPx) / w, cy: crop.cy - (dy * perPx) / h });
+    const r = rotatedSize(w, h, rotationOf(crop));
+    update({
+      ...crop,
+      cx: crop.cx - (dx * perPx) / r.width,
+      cy: crop.cy - (dy * perPx) / r.height,
+    });
   };
 
   const onPointerDown = (e: PointerEvent) => {
@@ -97,6 +108,9 @@ export const CropEditor = ({ board, row, col }: Props) => {
     } else if (e.key === "-") {
       e.preventDefault();
       update({ ...crop, zoom: crop.zoom - 0.1 });
+    } else if (e.key === "r" || e.key === "R") {
+      e.preventDefault();
+      rotate();
     }
   };
 
@@ -115,32 +129,22 @@ export const CropEditor = ({ board, row, col }: Props) => {
         </button>
         <h1>表示範囲を調整</h1>
       </div>
-      <p class="muted">ドラッグで位置、ピンチまたはスライダーで拡大率を変えられます。</p>
+      <p class="muted">
+        ドラッグで位置、ピンチまたはスライダーで拡大率を変えられます。「90°回転」で写真の向きを変えられます。
+      </p>
       <div
         ref={frame}
         class="crop-frame"
         tabIndex={0}
         role="application"
-        aria-label={`${cell.title}の写真。矢印キーで位置、プラスとマイナスで拡大率を変更`}
+        aria-label={`${cell.title}の写真。矢印キーで位置、プラスとマイナスで拡大率、Rキーで回転`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
       >
-        {photo && box && (
-          <img
-            src={photo.url}
-            alt=""
-            draggable={false}
-            style={{
-              left: `${box.left}px`,
-              top: `${box.top}px`,
-              width: `${box.width}px`,
-              height: `${box.height}px`,
-            }}
-          />
-        )}
+        {photo && box && <img src={photo.url} alt="" draggable={false} style={imageStyle(box)} />}
       </div>
       <label class="field">
         <span class="field-label">拡大率（{crop.zoom.toFixed(1)}倍）</span>
@@ -154,7 +158,14 @@ export const CropEditor = ({ board, row, col }: Props) => {
         />
       </label>
       <div class="btn-row">
-        <button type="button" class="btn" onClick={() => update(DEFAULT_CROP)}>
+        <button type="button" class="btn" onClick={rotate}>
+          90°回転
+        </button>
+        <button
+          type="button"
+          class="btn"
+          onClick={() => update({ ...DEFAULT_CROP, rotation: rotationOf(crop) })}
+        >
           中央に戻す
         </button>
         <span style={{ flex: 1 }} />
