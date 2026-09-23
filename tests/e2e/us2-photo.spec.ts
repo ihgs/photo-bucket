@@ -90,6 +90,31 @@ test("US2: adjust the visible area and replace the photo", async ({ page }) => {
   await expect(cell(page, 1, 1)).toHaveAttribute("aria-label", /達成済み/);
 });
 
+test("US2: the sheet's preview crops the photo like the grid, also when rotated", async ({
+  page,
+}) => {
+  await createBoard(page, "旅", "3×3");
+  await fillCell(page, 1, 1, "海");
+  await page.getByLabel("ライブラリから選ぶ").setInputFiles(fixture("landscape.jpg"));
+  const frame = page.locator(".cell-photo-preview");
+  const img = frame.locator("img");
+  await expect(img).toBeVisible();
+  const centred = async () => {
+    const f = (await frame.boundingBox())!;
+    const i = (await img.boundingBox())!;
+    return [
+      Math.abs(i.x + i.width / 2 - (f.x + f.width / 2)),
+      Math.abs(i.y + i.height / 2 - (f.y + f.height / 2)),
+      // the photo covers the square: its short side equals the frame's side
+      Math.abs(Math.min(i.width, i.height) - f.width),
+    ].every((d) => d <= 1);
+  };
+  await expect.poll(centred).toBe(true);
+  await page.getByRole("button", { name: "90°回転" }).click();
+  await expect(img).toHaveCSS("transform", /matrix/);
+  await expect.poll(centred).toBe(true);
+});
+
 test("US2: a non-image file shows an error and leaves the cell unchanged", async ({ page }) => {
   await createBoard(page, "旅", "3×3");
   await fillCell(page, 1, 1, "海");

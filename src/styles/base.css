@@ -295,12 +295,13 @@ textarea {
   white-space: pre;
   overflow: hidden;
 }
-.grid-cell .photo {
+/* PhotoInCell: used in grid cells and in the cell sheet's preview */
+.photo {
   position: absolute;
   inset: 0;
   overflow: hidden;
 }
-.grid-cell .photo img {
+.photo img {
   position: absolute;
   max-width: none;
 }
