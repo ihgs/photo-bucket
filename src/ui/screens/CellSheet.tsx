@@ -1,3 +1,4 @@
+import { Pencil } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { findCell } from "../../domain/grid";
@@ -9,6 +10,7 @@ import { removeCell, upsertCell } from "../state/boardStore";
 import { useDebounced } from "../useDebounced";
 import { useVisualViewport } from "../useVisualViewport";
 import { PhotoSection } from "./PhotoSection";
+import { IconButton } from "../components/IconButton";
 
 interface Props {
   board: Board;
@@ -99,14 +101,11 @@ export const CellSheet = ({ board, row, col }: Props) => {
             {row + 1}行{col + 1}列{cell ? "" : "（新しい項目）"}
           </h2>
           {cell && canView && !editing && (
-            <button
-              type="button"
-              class="btn btn-ghost"
-              aria-label="やりたいこととカテゴリを編集"
+            <IconButton
+              icon={Pencil}
+              label="やりたいこととカテゴリを編集"
               onClick={() => setEditing(true)}
-            >
-              ✎
-            </button>
+            />
           )}
           {canView && editing && (
             <button type="button" class="btn btn-primary" onClick={finishEditing}>

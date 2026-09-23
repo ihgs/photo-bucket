@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-preact";
 import { useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { cellsOutside, gridLabel } from "../../domain/grid";
@@ -8,6 +9,7 @@ import { SizePicker } from "../components/SizePicker";
 import { resize, updateTitle } from "../state/boardStore";
 import { useDebounced } from "../useDebounced";
 import { BoardDangerZone } from "./BoardDangerZone";
+import { IconButton } from "../components/IconButton";
 
 export const BoardSettings = ({ board }: { board: Board }) => {
   const [title, setTitle] = useState(board.title);
@@ -32,14 +34,11 @@ export const BoardSettings = ({ board }: { board: Board }) => {
   return (
     <>
       <div class="top-bar">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          aria-label="ボードへ戻る"
+        <IconButton
+          icon={ArrowLeft}
+          label="ボードへ戻る"
           onClick={() => navigate({ name: "board", boardId: board.id })}
-        >
-          ←
-        </button>
+        />
         <h1>ボードの設定</h1>
       </div>
       <label class="field">

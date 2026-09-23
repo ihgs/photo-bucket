@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-preact";
 import { useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { reportError } from "../../app/errors";
@@ -7,6 +8,7 @@ import { BOARD_TITLE_MAX, UNTITLED_BOARD } from "../../domain/validation";
 import { createBoard } from "../../storage/boards";
 import { SizePicker } from "../components/SizePicker";
 import { openBoard } from "../state/boardStore";
+import { IconButton } from "../components/IconButton";
 
 export const NewBoard = () => {
   const [title, setTitle] = useState("");
@@ -29,14 +31,7 @@ export const NewBoard = () => {
   return (
     <form onSubmit={submit}>
       <div class="top-bar">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          onClick={() => navigate({ name: "list" })}
-          aria-label="戻る"
-        >
-          ←
-        </button>
+        <IconButton icon={ArrowLeft} label="戻る" onClick={() => navigate({ name: "list" })} />
         <h1>新しいボード</h1>
       </div>
       <label class="field">

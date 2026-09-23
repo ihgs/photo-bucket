@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { reportError } from "../../app/errors";
@@ -5,6 +6,7 @@ import type { Board } from "../../domain/types";
 import { exportFileName, renderBoard } from "../../media/renderBoard";
 import { canShareFiles, shareOrDownload } from "../../media/shareImage";
 import { getPreferences, updatePreferences } from "../../storage/preferences";
+import { IconButton } from "../components/IconButton";
 
 export const ExportDialog = ({ board }: { board: Board }) => {
   const [includeTitle, setIncludeTitle] = useState<boolean | null>(null);
@@ -59,14 +61,11 @@ export const ExportDialog = ({ board }: { board: Board }) => {
   return (
     <>
       <div class="top-bar">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          aria-label="ボードへ戻る"
+        <IconButton
+          icon={ArrowLeft}
+          label="ボードへ戻る"
           onClick={() => navigate({ name: "board", boardId: board.id })}
-        >
-          ←
-        </button>
+        />
         <h1>画像として保存</h1>
       </div>
 

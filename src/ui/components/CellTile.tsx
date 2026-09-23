@@ -1,3 +1,4 @@
+import { Plus } from "lucide-preact";
 import type { CellLayout, TextBlock } from "../../domain/layout";
 
 /** One line-positioned text block, drawn exactly where the canvas renderer draws it. */
@@ -64,8 +65,8 @@ export const CellTile = ({ layout: c, selected, onClick, photo }: Props) => (
     }}
   >
     {c.kind === "empty" && (
-      <span class="plus" aria-hidden="true" style={{ fontSize: `${c.size * 0.3}px` }}>
-        ＋
+      <span class="plus" aria-hidden="true">
+        <Plus size={c.size * 0.3} />
       </span>
     )}
     {c.band && (
