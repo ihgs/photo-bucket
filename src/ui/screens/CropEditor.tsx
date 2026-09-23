@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import {
@@ -16,6 +17,7 @@ import type { Board, Crop } from "../../domain/types";
 import { imageStyle } from "../components/PhotoInCell";
 import { setCrop } from "../state/boardStore";
 import { usePhotoUrl } from "../usePhotoUrl";
+import { IconButton } from "../components/IconButton";
 
 interface Props {
   board: Board;
@@ -124,9 +126,7 @@ export const CropEditor = ({ board, row, col }: Props) => {
   return (
     <>
       <div class="top-bar">
-        <button type="button" class="btn btn-ghost" aria-label="キャンセル" onClick={back}>
-          ←
-        </button>
+        <IconButton icon={ArrowLeft} label="キャンセル" onClick={back} />
         <h1>表示範囲を調整</h1>
       </div>
       <p class="muted">

@@ -108,6 +108,9 @@ h2 {
   border-color: transparent;
   background: transparent;
 }
+.icon-btn {
+  padding: 10px;
+}
 .btn-block {
   width: 100%;
 }
@@ -286,7 +289,6 @@ textarea {
   align-items: center;
   justify-content: center;
   color: #a79c88;
-  font-size: 1.4em;
 }
 .grid-cell .line {
   position: absolute;

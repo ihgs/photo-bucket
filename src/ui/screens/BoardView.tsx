@@ -1,3 +1,4 @@
+import { ArrowLeft, Settings } from "lucide-preact";
 import { useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { countAchieved, totalCells } from "../../domain/grid";
@@ -5,6 +6,7 @@ import type { Board } from "../../domain/types";
 import { GridView } from "../components/GridView";
 import { swapCells } from "../state/boardStore";
 import { PhotoInCell } from "../components/PhotoInCell";
+import { IconButton } from "../components/IconButton";
 
 type MoveState = { active: false } | { active: true; from: { row: number; col: number } | null };
 
@@ -31,23 +33,17 @@ export const BoardView = ({ board }: { board: Board }) => {
   return (
     <>
       <div class="top-bar">
-        <button
-          type="button"
-          class="btn btn-ghost"
+        <IconButton
+          icon={ArrowLeft}
+          label="ボード一覧へ"
           onClick={() => navigate({ name: "list" })}
-          aria-label="ボード一覧へ"
-        >
-          ←
-        </button>
+        />
         <h1>{board.title}</h1>
-        <button
-          type="button"
-          class="btn btn-ghost"
-          aria-label="ボードの設定"
+        <IconButton
+          icon={Settings}
+          label="ボードの設定"
           onClick={() => navigate({ name: "settings", boardId: board.id })}
-        >
-          ⚙
-        </button>
+        />
       </div>
       <div class="progress-line">
         <span class="progress-count" aria-live="polite">
