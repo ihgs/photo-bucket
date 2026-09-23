@@ -1,18 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: (template) → 1.0.0
-- Modified principles: 初版のためなし（テンプレートのプレースホルダーを具体化）
-  - [PRINCIPLE_1_NAME] → I. ローカルファースト & プライバシー
-  - [PRINCIPLE_2_NAME] → II. 静的ホスティング前提 (GitHub Pages)
-  - [PRINCIPLE_3_NAME] → III. オフライン対応 PWA
-  - [PRINCIPLE_4_NAME] → IV. モバイルファースト & アクセシビリティ
-  - [PRINCIPLE_5_NAME] → V. シンプルさ & 最小依存
-- Added sections: VI. データの可搬性と画像出力の忠実性, 技術的制約, 開発ワークフローと品質ゲート
-- Removed sections: なし
-- Templates requiring updates: なし（依存テンプレートは実行時に本憲章を参照する）
-- Follow-up TODOs: なし
--->
-
 # Photo Bucket Constitution
 
 ## Core Principles
