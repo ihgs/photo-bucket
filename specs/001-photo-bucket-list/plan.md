@@ -31,7 +31,7 @@ IndexedDB に保存する。
 
 **Testing**: Vitest + happy-dom + fake-indexeddb + @testing-library/preact（単体・結合）、Playwright の Chromium・WebKit（E2E）
 
-**Target Platform**: 最新の iOS Safari、Android Chrome、デスクトップの Chrome・Edge・Safari・Firefox。GitHub Pages のサブパス `/photo-bucket/` で配信
+**Target Platform**: 最新の iOS Safari、Android Chrome、デスクトップの Chrome・Edge・Safari（Firefox は対象外）。GitHub Pages のサブパス `/photo-bucket/` で配信
 
 **Project Type**: クライアントのみの Web アプリ（PWA）。バックエンドなし
 

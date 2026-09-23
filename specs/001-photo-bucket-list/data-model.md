@@ -102,6 +102,7 @@ Board の `cells` 配列の要素。
 |---|---|---|---|
 | `exportIncludeTitle` | boolean | `true` | 保存画像にタイトルを入れるか。前回の選択を記憶する（FR-013a） |
 | `lastBackupAt` | string (ISO 8601) \| null | `null` | 最後にバックアップを書き出した日時。案内の表示判断に使う |
+| `lastOpenedBoardId` | string \| null | `null` | 最後に開いたボードの ID。アプリ起動時に最初の 1 回だけ、このボードを開く |
 
 ## スキーマのバージョンと移行
 
