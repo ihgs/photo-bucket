@@ -24,6 +24,9 @@ IndexedDB に保存する。
 **2026-09-24 追加**: ボードが 1 つもないとき、ボード一覧に 4 つの手順の使い方を表示する（FR-028）。
 ボード一覧が空かどうかだけで出し分け、データモデルと依存は変えない（R14）。
 
+**2026-09-24 変更**: バックアップを JSON から ZIP（拡張子 `.pbz`、写真はバイト列のまま）に変える（FR-024, R11）。
+依存は増やさず、以前の JSON 形式との互換は持たない。
+
 ## Technical Context
 
 **Language/Version**: TypeScript（strict）、ビルドは Vite（実装時点の最新安定版）、Node.js 24（開発・CI）
@@ -55,7 +58,7 @@ IndexedDB に保存する。
 | III. オフライン対応 PWA | vite-plugin-pwa で Manifest と Service Worker を生成し全ファイルを precache。更新は prompt 方式で、データは IndexedDB に分離（R9） | ✅ | ✅ |
 | IV. モバイルファースト & アクセシビリティ | 360px 幅基準。撮影とライブラリの 2 ボタン。タップ領域 44px 以上、読み上げラベル、ドラッグ不要の移動モード（ui-routes.md） | ✅ | ✅ |
 | V. シンプルさ & 最小依存 | 実行時依存は Preact・@preact/signals・idb の 3 つ（合計 gzip 約 7KB）。追加理由は research.md R2・R3 に記録。ルーターや画像化ライブラリは不採用 | ✅ | ✅ |
-| VI. データの可搬性と画像出力の忠実性 | マス目サイズはデータで表現（固定なし）。`layoutBoard` の共有で画面と画像を一致させる。JSON バックアップ。スキーマのバージョンと移行（data-model.md） | ✅ | ✅ |
+| VI. データの可搬性と画像出力の忠実性 | マス目サイズはデータで表現（固定なし）。`layoutBoard` の共有で画面と画像を一致させる。ZIP（`.pbz`）のバックアップ（依存なしの自前実装、R11）。スキーマのバージョンと移行（data-model.md） | ✅ | ✅ |
 | 技術的制約 | Canvas による画像合成、JSX の自動エスケープ（`innerHTML` 不使用）、日本語 UI、容量超過の通知 | ✅ | ✅ |
 | 品質ゲート | データモデルと移行、画像出力ロジック、保存と読み込みの自動テスト。サブパス配信でのオフライン E2E（quickstart.md） | ✅ | ✅ |
 
@@ -108,6 +111,7 @@ src/
 │   ├── renderBoard.ts       # layoutBoard の結果を Canvas に描画
 │   └── shareImage.ts        # Web Share API とダウンロードの切り替え
 ├── backup/
+│   ├── zip.ts               # 圧縮なし ZIP の書き込み・読み込み、CRC32
 │   ├── exportBackup.ts
 │   └── importBackup.ts      # 検証、ID 重複時の選択、1 トランザクションでの書き込み
 ├── ui/

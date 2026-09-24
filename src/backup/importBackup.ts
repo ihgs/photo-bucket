@@ -4,7 +4,8 @@ import { BOARD_TITLE_MAX, validateBoard } from "../domain/validation";
 import { importPhoto } from "../media/importPhoto";
 import { getDb, withQuotaGuard } from "../storage/db";
 import { deletePhotosOfBoardInTx, releasePhotoUrls, toStored } from "../storage/photos";
-import { BACKUP_FORMAT, BACKUP_FORMAT_VERSION, base64ToBytes } from "./format";
+import { BACKUP_FORMAT, BACKUP_FORMAT_VERSION, BACKUP_MANIFEST, isPhotoType } from "./format";
+import { readZip, type ZipReader } from "./zip";
 
 export class BackupError extends UserFacingError {}
 
@@ -54,13 +55,28 @@ const pickBoard = (b: Board): Board => ({
   updatedAt: b.updatedAt,
 });
 
-const DATA_URL = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/;
+/** Reads a ZIP entry; a broken ZIP becomes the "unreadable" error. */
+const readEntry = async (zip: ZipReader, name: string) => {
+  try {
+    return await zip.read(name);
+  } catch {
+    throw new BackupError(MSG.unreadable);
+  }
+};
 
-/** Validates a backup file completely. Writes nothing (contracts/backup-format.md). */
-export const parseBackup = async (text: string): Promise<ParsedBackup> => {
+/** Validates a .pbz backup file completely. Writes nothing (contracts/backup-format.md). */
+export const parseBackup = async (file: Blob): Promise<ParsedBackup> => {
+  let zip: ZipReader;
+  try {
+    zip = await readZip(file);
+  } catch {
+    throw new BackupError(MSG.unreadable);
+  }
+  const manifest = await readEntry(zip, BACKUP_MANIFEST);
+  if (!manifest) throw new BackupError(MSG.foreign);
   let json: unknown;
   try {
-    json = JSON.parse(text);
+    json = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(manifest));
   } catch {
     throw new BackupError(MSG.unreadable);
   }
@@ -80,46 +96,47 @@ export const parseBackup = async (text: string): Promise<ParsedBackup> => {
   }
   const boards = (json.boards as Board[]).map(pickBoard);
 
-  const photos = new Map<string, ParsedPhoto>();
+  const entries = new Map<string, Omit<ParsedPhoto, "bytes"> & { path: string }>();
   for (const p of json.photos) {
     if (
       !isObject(p) ||
       typeof p.id !== "string" ||
       typeof p.boardId !== "string" ||
-      typeof p.dataUrl !== "string" ||
+      typeof p.type !== "string" ||
+      typeof p.path !== "string" ||
+      !isPhotoType(p.type) ||
       !Number.isFinite(p.width) ||
       !Number.isFinite(p.height)
     )
       throw new BackupError(MSG.photo);
-    const m = DATA_URL.exec(p.dataUrl);
-    if (!m) throw new BackupError(MSG.photo);
-    let bytes: ArrayBuffer;
-    try {
-      bytes = base64ToBytes(m[2]);
-    } catch {
-      throw new BackupError(MSG.photo);
-    }
-    photos.set(p.id, {
+    entries.set(p.id, {
       id: p.id,
       boardId: p.boardId,
       width: p.width as number,
       height: p.height as number,
-      type: m[1],
-      bytes,
+      type: p.type,
+      path: p.path,
     });
   }
   for (const b of boards) {
     for (const c of b.cells) {
       if (!c.photoId) continue;
-      const p = photos.get(c.photoId);
+      const p = entries.get(c.photoId);
       if (!p || p.boardId !== b.id) throw new BackupError(MSG.photo);
     }
   }
-  // Only keep photos that are referenced by a cell.
+  // Only read photos that are referenced by a cell.
   const used = new Set(
     boards.flatMap((b) => b.cells.flatMap((c) => (c.photoId ? [c.photoId] : []))),
   );
-  return { boards, photos: [...photos.values()].filter((p) => used.has(p.id)) };
+  const photos: ParsedPhoto[] = [];
+  for (const { path, ...p } of entries.values()) {
+    if (!used.has(p.id)) continue;
+    const bytes = await readEntry(zip, path);
+    if (!bytes) throw new BackupError(MSG.photo);
+    photos.push({ ...p, bytes: bytes.buffer });
+  }
+  return { boards, photos };
 };
 
 /** Boards in the backup whose id already exists on this device. */

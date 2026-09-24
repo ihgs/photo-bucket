@@ -1,18 +1,25 @@
 # Contract: バックアップファイル形式
 
-**Related**: FR-024, FR-025, SC-007 / [data-model.md](../data-model.md)
+**Related**: FR-024, FR-025, SC-007 / [data-model.md](../data-model.md) / [research.md](../research.md) R11
 
-アプリが書き出し、読み込むバックアップファイルの形式を定める。アプリの外に出る唯一のデータ形式であり、
-将来のバージョンでも読み込めるよう後方互換性を保つ。
+アプリが書き出し、読み込むバックアップファイルの形式を定める。アプリの外に出る唯一のデータ形式である。
+テスト運用中のため、以前の JSON 形式（`.photobucket.json`）は読み込まない（Clarifications 2026-09-24）。
 
 ## ファイル
 
-- 形式: UTF-8 の JSON（1 ファイル）
-- ファイル名: `photo-bucket-<YYYYMMDD-HHmm>.photobucket.json`
-- MIME タイプ: `application/json`
+- 形式: ZIP（圧縮なし = stored、ZIP64 は使わない）。ファイル名は UTF-8（汎用フラグ bit 11）
+- ファイル名: `photo-bucket-<YYYYMMDD-HHmm>.pbz`
+- MIME タイプ: `application/zip`
 - 書き出し単位: 「すべてのボード」または「選んだ 1 ボード」
 
-## スキーマ（formatVersion 1）
+## ZIP の中身
+
+```text
+backup.json               ボード・マス・写真の情報（写真の本体は含まない）。最初のエントリにする
+photos/<photoId>.jpg      写真の本体（取り込み時のバイト列そのまま）。PNG は .png、WebP は .webp
+```
+
+## backup.json（formatVersion 1）
 
 ```jsonc
 {
@@ -45,7 +52,8 @@
       "id": "…",
       "boardId": "8f0c…",
       "width": 1600, "height": 1200,
-      "dataUrl": "data:image/jpeg;base64,…"   // 本体のみ。サムネイルは読み込み時に再生成する
+      "type": "image/jpeg",              // image/jpeg | image/png | image/webp
+      "path": "photos/….jpg"             // ZIP 内のエントリ名。サムネイルは入れず、読み込み時に再生成する
     }
   ]
 }
@@ -53,15 +61,15 @@
 
 ## 読み込み時の検証（FR-025）
 
-次のいずれかに当てはまる場合は、**何も書き込まずに**中止し、理由を日本語で表示する。
+ファイル名や拡張子では判定しない。次のいずれかに当てはまる場合は、**何も書き込まずに**中止し、理由を日本語で表示する。
 
-| 条件 | 表示するメッセージの例 |
+| 条件 | 表示するメッセージ |
 |---|---|
-| JSON として読めない | 「バックアップファイルを読み込めませんでした（ファイルが壊れている可能性があります）」 |
-| `format` が `"photo-bucket-backup"` でない | 「このアプリのバックアップファイルではありません」 |
+| ZIP として読めない、圧縮されたエントリがある、CRC32 が合わない、`backup.json` が JSON として読めない | 「バックアップファイルを読み込めませんでした（ファイルが壊れている可能性があります）」 |
+| `backup.json` がない、または `format` が `"photo-bucket-backup"` でない | 「このアプリのバックアップファイルではありません」 |
 | `formatVersion` がアプリの対応範囲より大きい | 「新しいバージョンのアプリで作られたファイルです。アプリを更新してください」 |
 | フィールドが data-model.md の検証ルールに合わない | 「ファイルの内容に誤りがあります」 |
-| `photoId` が参照する写真が `photos` にない、または画像として読めない | 「写真のデータが欠けています」 |
+| `photoId` が参照する写真が `photos` にない、`path` のエントリが ZIP にない、`type` が画像でない、または画像として読めない | 「写真のデータが欠けています」 |
 
 すべての検証に通ったあと、1 つの IndexedDB トランザクションでまとめて書き込む。途中で失敗したら
 トランザクションごと取り消す。

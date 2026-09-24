@@ -1,8 +1,23 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseBackup } from "../../src/backup/importBackup";
+import { createZip } from "../../src/backup/zip";
 import { resetDbForTests, getDb } from "../../src/storage/db";
 
-const PIXEL = "data:image/jpeg;base64,/9j/AA==";
+const PIXEL = Uint8Array.from([0xff, 0xd8, 0xff, 0x00]);
+const text = (s: string) => new TextEncoder().encode(s);
+
+/** A .pbz with the given backup.json and photo entries. */
+const pbz = (
+  manifest: unknown,
+  photos: Record<string, Uint8Array<ArrayBuffer>> = { "photos/p1.jpg": PIXEL },
+) =>
+  createZip([
+    {
+      name: "backup.json",
+      data: text(typeof manifest === "string" ? manifest : JSON.stringify(manifest)),
+    },
+    ...Object.entries(photos).map(([name, data]) => ({ name, data })),
+  ]);
 
 const valid = () => ({
   format: "photo-bucket-backup",
@@ -31,12 +46,14 @@ const valid = () => ({
       ],
     },
   ],
-  photos: [{ id: "p1", boardId: "b1", width: 10, height: 10, dataUrl: PIXEL }],
+  photos: [
+    { id: "p1", boardId: "b1", width: 10, height: 10, type: "image/jpeg", path: "photos/p1.jpg" },
+  ],
   unknownTopLevel: true,
 });
 
-const expectError = async (text: string, message: string) => {
-  await expect(parseBackup(text)).rejects.toThrow(message);
+const expectError = async (file: Blob | Promise<Blob>, message: string) => {
+  await expect(parseBackup(await file)).rejects.toThrow(message);
   expect(await (await getDb()).count("boards")).toBe(0);
   expect(await (await getDb()).count("photos")).toBe(0);
 };
@@ -47,29 +64,36 @@ beforeEach(async () => {
 
 describe("parseBackup validation (contracts/backup-format.md)", () => {
   it("accepts a valid file and ignores unknown fields", async () => {
-    const parsed = await parseBackup(JSON.stringify(valid()));
+    const parsed = await parseBackup(await pbz(valid()));
     expect(parsed.boards[0].id).toBe("b1");
     expect(parsed.boards[0].cells[0]).not.toHaveProperty("futureField");
     expect(parsed.photos[0].bytes.byteLength).toBe(4);
   });
 
-  it("rejects text that is not JSON", async () => {
+  it("rejects a file that is not a ZIP", async () => {
     await expectError(
-      "{not json",
+      new Blob([JSON.stringify(valid())]),
+      "バックアップファイルを読み込めませんでした（ファイルが壊れている可能性があります）",
+    );
+  });
+
+  it("rejects a backup.json that is not JSON", async () => {
+    await expectError(
+      pbz("{not json"),
       "バックアップファイルを読み込めませんでした（ファイルが壊れている可能性があります）",
     );
   });
 
   it("rejects files of another format", async () => {
     await expectError(
-      JSON.stringify({ ...valid(), format: "other" }),
+      pbz({ ...valid(), format: "other" }),
       "このアプリのバックアップファイルではありません",
     );
   });
 
   it("rejects newer format versions", async () => {
     await expectError(
-      JSON.stringify({ ...valid(), formatVersion: 2 }),
+      pbz({ ...valid(), formatVersion: 2 }),
       "新しいバージョンのアプリで作られたファイルです。アプリを更新してください",
     );
   });
@@ -77,18 +101,29 @@ describe("parseBackup validation (contracts/backup-format.md)", () => {
   it("rejects unsupported grid sizes", async () => {
     const v = valid();
     v.boards[0].size = { cols: 6, rows: 6 };
-    await expectError(JSON.stringify(v), "ファイルの内容に誤りがあります");
+    await expectError(pbz(v), "ファイルの内容に誤りがあります");
   });
 
   it("rejects missing photos", async () => {
     const v = valid();
     v.photos = [];
-    await expectError(JSON.stringify(v), "写真のデータが欠けています");
+    await expectError(pbz(v), "写真のデータが欠けています");
   });
 
   it("rejects photos that are not image data", async () => {
     const v = valid();
-    v.photos[0].dataUrl = "data:text/plain;base64,aGVsbG8=";
-    await expectError(JSON.stringify(v), "写真のデータが欠けています");
+    v.photos[0].type = "text/plain";
+    await expectError(pbz(v), "写真のデータが欠けています");
+  });
+
+  it("rejects a ZIP without backup.json", async () => {
+    await expectError(
+      createZip([{ name: "other.json", data: text("{}") }]),
+      "このアプリのバックアップファイルではありません",
+    );
+  });
+
+  it("rejects a missing photo entry", async () => {
+    await expectError(pbz(valid(), {}), "写真のデータが欠けています");
   });
 });

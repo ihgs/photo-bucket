@@ -47,7 +47,6 @@ const ImportButton = ({ onDone }: { onDone: () => void }) => (
     バックアップを読み込む
     <input
       type="file"
-      accept=".json,application/json"
       class="visually-hidden"
       onChange={async (e) => {
         const input = e.currentTarget;

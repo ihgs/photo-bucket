@@ -315,3 +315,20 @@ Task: "src/media/importPhoto.ts を実装する"
 - [X] T084 `npm run lint`、`npm test`、`npm run test:e2e` を実行し、すべて成功することを確かめる（`tests/e2e/a11y.spec.ts` の "empty list" のチェックで案内を含めてアクセシビリティ違反がないこと）per quickstart.md
 
 **Dependencies**: T080・T081・T083 は互いに並列に進められる。T082 は T080 のあと（テストが失敗することを確かめてから実装する）。T084 はすべてのあと
+
+## Phase 11: バックアップを ZIP（`.pbz`）にする（FR-024, Clarifications 2026-09-24）
+
+**Goal**: バックアップを、`backup.json` と写真の本体（`photos/<id>.<ext>`）を入れた圧縮なしの ZIP にし、拡張子を `.pbz` にする。依存は増やさず、以前の JSON 形式は読み込まない（contracts/backup-format.md、research.md R11）
+
+**Independent Test**: `.pbz` を書き出し、データを消去して読み込むと元どおりになる。ZIP でないファイル・CRC32 が合わないファイルでは既存データが変わらない
+
+- [X] T085 [P] [US5] `tests/unit/zip.test.ts` を作る: `crc32` が "123456789" で `0xCBF43926` を返す。`createZip` → `readZip` で名前（日本語を含む）とバイト列が往復する。ZIP でないデータ・末尾が切れたデータ・データを 1 バイト書き換えたもの（CRC32 不一致）・圧縮方式が 0 以外のエントリで `ZipError` になる
+- [X] T086 [US5] `src/backup/zip.ts` を作る: `crc32(bytes)`、`createZip(entries: { name: string; data: Uint8Array | Blob }[]): Promise<Blob>`（stored、UTF-8 フラグ、DOS 日時、central directory と EOCD。エントリは 1 つずつ読んで CRC32 を計算し、本体は Blob のまま並べる）、`readZip(blob: Blob): Promise<ZipReader>`（末尾から EOCD を探して central directory を読み、`names()` と `read(name): Promise<Uint8Array | undefined>` を返す。`read` は `Blob.slice` でそのエントリだけを読み、CRC32 を確かめる）。ZIP64・圧縮・暗号化は扱わず `ZipError` にする。依存ライブラリは使わない per research.md R11, 憲章 V
+- [X] T087 [US5] `src/backup/format.ts` の `BackupPhotoJson` を `{ id, boardId, width, height, type, path }` に変え、`bytesToBase64`・`base64ToBytes` と `dataUrl` を削除する。`BACKUP_MANIFEST = "backup.json"` と、MIME タイプから拡張子を返す `photoPath(id, type)`（`image/jpeg`→`.jpg`、`image/png`→`.png`、`image/webp`→`.webp`）を足す per contracts/backup-format.md
+- [X] T088 [US5] `src/backup/exportBackup.ts` を、`backup.json` を最初のエントリ、続けて各写真の Blob を `photos/<id>.<ext>` に入れた ZIP を返すように変える。Blob の type は `application/zip`、ファイル名は `photo-bucket-<YYYYMMDD-HHmm>.pbz` per FR-024
+- [X] T089 [US5] `src/backup/importBackup.ts` の `parseBackup` を `parseBackup(file: Blob)` に変え、`readZip` → `backup.json` を読む → 今の検証 → 各写真を `path` から読む、の順にする。エラーの対応は contracts/backup-format.md の表のとおり（ZIP として読めない・CRC 不一致・JSON として読めない → unreadable、`backup.json` がない → foreign、`path` のエントリがない・`type` が `image/(jpeg|png|webp)` でない → photo）。写真は参照されているものだけを読む per FR-025
+- [X] T090 [US5] `src/ui/backupActions.ts` の `parseBackup(await file.text())` を `parseBackup(file)` に、`src/ui/screens/BoardList.tsx` の `ImportButton` の `accept=".json,application/json"` を削除する（iOS で `.pbz` を選べなくなるのを防ぐ）per research.md R11
+- [X] T091 [US5] テストを新しい形式に合わせる: `tests/unit/backup-validate.test.ts` は `createZip` で `backup.json` と `photos/p1.jpg` を入れた ZIP を作ってから検証し、「ZIP でない」「`backup.json` がない」「写真のエントリがない」ケースを足す。`tests/integration/backup-roundtrip.test.ts` はファイル名 `/^photo-bucket-\d{8}-\d{4}\.pbz$/` と Blob を直接 `parseBackup` に渡す形に変える。`tests/e2e/us5-backup.spec.ts` はファイル名の確認を `.pbz` にし、壊れたファイルは ZIP でないテキストを `broken.pbz` として読み込み、「バックアップファイルを読み込めませんでした（ファイルが壊れている可能性があります）」が出て既存データが変わらないことを確かめる
+- [X] T092 `npm run lint`、`npm test`、`npm run test:e2e`、`npm run build` と `node scripts/check-bundle-size.mjs` を実行し、すべて成功することを確かめる per quickstart.md
+
+**Dependencies**: T085 → T086（テストが失敗することを確かめてから実装する）→ T087 → T088・T089 → T090 → T091 → T092
