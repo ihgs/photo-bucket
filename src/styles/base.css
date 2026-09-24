@@ -525,6 +525,22 @@ input[type="range"] {
   text-align: center;
   padding: 48px 16px;
 }
+.usage {
+  max-width: 22rem;
+  margin: 24px auto;
+  text-align: left;
+}
+.usage h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+.usage-steps {
+  margin: 0;
+  padding-left: 1.5em;
+}
+.usage-steps li + li {
+  margin-top: 6px;
+}
 .section {
   margin: 24px 0;
 }

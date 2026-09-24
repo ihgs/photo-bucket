@@ -299,3 +299,19 @@ Task: "src/media/importPhoto.ts を実装する"
 - [X] T077 `src/ui/screens/BoardList.tsx` から各ボードの削除ボタンを取り除く（削除は `BoardDangerZone` の「このボードを削除」のみ） per FR-023, US5/AC5 (contradicts)
 - [X] T078 E2E を更新する: 未達成マスのあるボードを書き出すテスト（us3-export, a11y, privacy, us4-offline）は書き出し画面へ直接遷移し、`tests/e2e/us3-export.spec.ts` に「未達成があるとボタンが出ず、全達成で出る」テストを追加する per US3/AC1, US3/AC5 (partial)
 - [X] T079 `tests/e2e/us5-backup.spec.ts` のボード削除を設定画面経由に変え、一覧に削除ボタンがないことを確かめる per US5/AC4, US5/AC5 (partial)
+
+## Phase 10: ボードがないときの使い方の案内（FR-028, Clarifications 2026-09-24）
+
+**Goal**: ボードが 1 つもないとき、ボード一覧（`#/`）に見出し「使い方」と 4 つの手順の番号付きリストを出す。ボードが 1 つ以上あるときは出さず、開く入り口も置かない（contracts/ui-routes.md、research.md R14）
+
+**Independent Test**: データのない状態でアプリを開くと案内が出て、ボードを作って一覧に戻ると案内が消え、すべてのボードを削除すると再び出る
+
+**文言（この順・この文言で表示する）**: 見出し「使い方」、手順 1.「ボードを作る」 2.「マスにやりたいことを書く」 3.「達成したら写真を貼る」 4.「全マス達成したら一枚の画像として保存・共有する」
+
+- [X] T080 [P] [US1] `tests/e2e/us1-board.spec.ts` の最初のテストで、「最初のボードを作る」を押す前に `getByRole("heading", { name: "使い方" })` が見え、その下の `getByRole("list")` 内の `listitem` が 4 つで、上の文言どおりの順になっていることを確かめる。ボードを作って「ボード一覧へ」で一覧に戻ったあと、見出し「使い方」が存在しない（`toHaveCount(0)`）ことを確かめる per US1/AC6, US1/AC7
+- [X] T081 [P] [US5] `tests/e2e/us5-backup.spec.ts` の、ボードを削除して「最初のボードを作る」ボタンが再び見えることを確かめている箇所（79 行目付近）に、見出し「使い方」も再び見えることの確認を足す per FR-028
+- [X] T082 [US1] `src/ui/screens/BoardList.tsx` の `boards.length === 0` の分岐で、説明文 `<p class="muted">` のあと・「最初のボードを作る」ボタンの前に、`<section class="usage" aria-labelledby="usage-heading">` を置き、中に `<h2 id="usage-heading">使い方</h2>` と、上の 4 つの手順を `<li>` にした `<ol class="usage-steps">` を入れる。文言は JSX のテキストとして書き（`innerHTML` は使わない）、画像・アイコン・新しい依存・保存する状態は足さない。ボードがあるときの表示は変えない per FR-028, research.md R14
+- [X] T083 [P] [US1] `src/styles/base.css` に `.usage` と `.usage-steps` のスタイルを足す。`.empty-state` は `text-align: center` なので、リストは `text-align: left` にしてブロックごと中央に寄せる（`display: inline-block` か `max-width` + `margin-inline: auto`）。360px 幅で横スクロールが出ないこと、文字色は既存の本文色を使いコントラスト比 4.5:1 以上を保つこと per FR-026, 憲章 IV
+- [X] T084 `npm run lint`、`npm test`、`npm run test:e2e` を実行し、すべて成功することを確かめる（`tests/e2e/a11y.spec.ts` の "empty list" のチェックで案内を含めてアクセシビリティ違反がないこと）per quickstart.md
+
+**Dependencies**: T080・T081・T083 は互いに並列に進められる。T082 は T080 のあと（テストが失敗することを確かめてから実装する）。T084 はすべてのあと

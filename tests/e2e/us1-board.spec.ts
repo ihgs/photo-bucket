@@ -3,6 +3,14 @@ import { cell, closeSheet, createBoard, fillCell } from "./helpers";
 
 test("US1: create a 3×4 board, write items, and keep them after reload", async ({ page }) => {
   await page.goto("./");
+  // With no boards, the list shows a 4-step guide (FR-028)
+  await expect(page.getByRole("heading", { name: "使い方" })).toBeVisible();
+  await expect(page.locator(".usage").getByRole("listitem")).toHaveText([
+    "ボードを作る",
+    "マスにやりたいことを書く",
+    "達成したら写真を貼る",
+    "全マス達成したら一枚の画像として保存・共有する",
+  ]);
   await page.getByRole("button", { name: "最初のボードを作る" }).click();
   await expect(page.getByRole("heading", { name: "新しいボード" })).toBeVisible();
   await createBoard(page, "京都旅行", "3×4");
@@ -37,6 +45,7 @@ test("US1: create a 3×4 board, write items, and keep them after reload", async 
   await expect(page.getByRole("heading", { level: 1, name: "京都旅行" })).toBeVisible();
   await page.getByRole("button", { name: "ボード一覧へ" }).click();
   await expect(page.getByRole("button", { name: /^京都旅行/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "使い方" })).toHaveCount(0);
   await page.getByRole("button", { name: /^京都旅行/ }).click();
 
   // an existing item opens read-only; the pencil button opens the form

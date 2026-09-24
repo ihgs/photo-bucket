@@ -77,4 +77,6 @@ test("US5: delete a board from its settings", async ({ page }) => {
   await page.getByRole("button", { name: "このボードを削除" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "削除" }).click();
   await expect(page.getByRole("button", { name: "最初のボードを作る" })).toBeVisible();
+  // Deleting the last board brings the guide back (FR-028)
+  await expect(page.getByRole("heading", { name: "使い方" })).toBeVisible();
 });

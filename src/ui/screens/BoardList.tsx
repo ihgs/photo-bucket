@@ -72,6 +72,15 @@ export const BoardList = () => {
       <div class="empty-state">
         <h1>フォトバケットリスト</h1>
         <p class="muted">やりたいことをマス目に書いて、達成したら写真を貼りましょう。</p>
+        <section class="usage" aria-labelledby="usage-heading">
+          <h2 id="usage-heading">使い方</h2>
+          <ol class="usage-steps">
+            <li>ボードを作る</li>
+            <li>マスにやりたいことを書く</li>
+            <li>達成したら写真を貼る</li>
+            <li>全マス達成したら一枚の画像として保存・共有する</li>
+          </ol>
+        </section>
         <p>
           <button type="button" class="btn btn-primary" onClick={() => navigate({ name: "new" })}>
             最初のボードを作る
