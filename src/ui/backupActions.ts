@@ -22,7 +22,7 @@ export const runExport = async (boardIds?: string[]) => {
 /** Reads a backup file, asks what to do with boards that already exist, and writes it. */
 export const runImport = async (file: File) => {
   try {
-    const parsed = await parseBackup(await file.text());
+    const parsed = await parseBackup(file);
     const existing = (await listBoards()).map((b) => b.id);
     const resolutions: Record<string, Resolution> = {};
     for (const b of detectConflicts(parsed, existing)) {

@@ -34,8 +34,8 @@ test("US5: switch boards, back up, delete, restore; a broken file changes nothin
     page.waitForEvent("download"),
     page.getByRole("button", { name: "バックアップを書き出す" }).first().click(),
   ]);
-  expect(download.suggestedFilename()).toMatch(/^photo-bucket-\d{8}-\d{4}\.photobucket\.json$/);
-  const backupPath = info.outputPath("backup.photobucket.json");
+  expect(download.suggestedFilename()).toMatch(/^photo-bucket-\d{8}-\d{4}\.pbz$/);
+  const backupPath = info.outputPath("backup.pbz");
   writeFileSync(backupPath, readFileSync((await download.path())!));
 
   // the list has no delete buttons; delete one board from its settings (FR-023)
@@ -61,13 +61,17 @@ test("US5: switch boards, back up, delete, restore; a broken file changes nothin
   await page.getByRole("button", { name: "ボード一覧へ" }).click();
 
   // broken file
-  const broken = info.outputPath("broken.photobucket.json");
+  const broken = info.outputPath("broken.pbz");
   writeFileSync(
     broken,
-    '{"format":"photo-bucket-backup","formatVersion":1,"boards":[{"id":1}],"photos":[]}',
+    '{"format":"photo-bucket-backup","formatVersion":1,"boards":[],"photos":[]}',
   );
   await page.getByLabel("バックアップを読み込む").setInputFiles(broken);
-  await expect(page.getByText("ファイルの内容に誤りがあります")).toBeVisible();
+  await expect(
+    page.getByText(
+      "バックアップファイルを読み込めませんでした（ファイルが壊れている可能性があります）",
+    ),
+  ).toBeVisible();
   await expect(page.locator(".board-item")).toHaveCount(3);
 });
 

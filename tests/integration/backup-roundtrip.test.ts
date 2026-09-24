@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { upsertCell } from "../../src/domain/grid";
 import { exportBackup } from "../../src/backup/exportBackup";
+import { readZip } from "../../src/backup/zip";
 import { applyBackup, detectConflicts, parseBackup } from "../../src/backup/importBackup";
 import { createBoard, getBoard, listBoards, saveBoard } from "../../src/storage/boards";
 import { getDb, resetDbForTests } from "../../src/storage/db";
@@ -27,7 +28,9 @@ const seed = async () => {
   a = (await getBoard(a.id))!;
   a = await saveBoard({
     ...a,
-    cells: a.cells.map((c) => (c.photoId ? { ...c, crop: { cx: 0.4, cy: 0.6, zoom: 1.5, rotation: 90 } } : c)),
+    cells: a.cells.map((c) =>
+      c.photoId ? { ...c, crop: { cx: 0.4, cy: 0.6, zoom: 1.5, rotation: 90 } } : c,
+    ),
   });
   let b = await createBoard("正方形", { cols: 5, rows: 5 });
   b = await saveBoard(upsertCell(b, 4, 4, { title: "オーロラ", category: "want" }));
@@ -48,14 +51,13 @@ describe("backup round trip (SC-007)", () => {
     );
 
     const { blob, fileName } = await exportBackup();
-    expect(fileName).toMatch(/^photo-bucket-\d{8}-\d{4}\.photobucket\.json$/);
+    expect(fileName).toMatch(/^photo-bucket-\d{8}-\d{4}\.pbz$/);
+    expect(blob.type).toBe("application/zip");
     expect((await getPreferences()).lastBackupAt).not.toBeNull();
-    const text = await blob.text();
-
     await resetDbForTests();
     expect(await listBoards()).toEqual([]);
 
-    const parsed = await parseBackup(text);
+    const parsed = await parseBackup(blob);
     expect(detectConflicts(parsed, [])).toEqual([]);
     await applyBackup(parsed, {}, { makeThumb });
 
@@ -73,15 +75,16 @@ describe("backup round trip (SC-007)", () => {
   it("exports a single board", async () => {
     const [a] = await seed();
     const { blob } = await exportBackup([a.id]);
-    const json = JSON.parse(await blob.text());
+    const zip = await readZip(blob);
+    expect(zip.names()).toHaveLength(2);
+    const json = JSON.parse(new TextDecoder().decode(await zip.read("backup.json")));
     expect(json.boards.map((x: { id: string }) => x.id)).toEqual([a.id]);
     expect(json.photos).toHaveLength(1);
   });
 
   it("overwrites or copies boards whose id already exists", async () => {
     const [a] = await seed();
-    const text = await (await exportBackup([a.id])).blob.text();
-    const parsed = await parseBackup(text);
+    const parsed = await parseBackup((await exportBackup([a.id])).blob);
     const existing = (await listBoards()).map((x) => x.id);
     expect(detectConflicts(parsed, existing).map((x) => x.id)).toEqual([a.id]);
 
