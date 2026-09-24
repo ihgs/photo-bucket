@@ -21,6 +21,9 @@ IndexedDB に保存する。
    表示範囲は解像度に依存しない `{cx, cy, zoom}` で保存する（R4, R5）。
 3. **オフライン**: Service Worker でアプリ全体を precache し、ユーザーデータは IndexedDB に分けて持つ（R3, R9）。
 
+**2026-09-24 追加**: ボードが 1 つもないとき、ボード一覧に 4 つの手順の使い方を表示する（FR-028）。
+ボード一覧が空かどうかだけで出し分け、データモデルと依存は変えない（R14）。
+
 ## Technical Context
 
 **Language/Version**: TypeScript（strict）、ビルドは Vite（実装時点の最新安定版）、Node.js 24（開発・CI）
