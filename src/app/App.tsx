@@ -12,6 +12,7 @@ import { CellSheet } from "../ui/screens/CellSheet";
 import { BoardSettings } from "../ui/screens/BoardSettings";
 import { CropEditor } from "../ui/screens/CropEditor";
 import { ExportDialog } from "../ui/screens/ExportDialog";
+import { BackupExport } from "../ui/screens/BackupExport";
 import { AppBanners } from "./AppBanners";
 
 const boardIdOf = (r: Route) => ("boardId" in r ? r.boardId : null);
@@ -51,6 +52,7 @@ const Screen = ({ route }: { route: Route }) => {
 
   if (route.name === "list") return <BoardList />;
   if (route.name === "new") return <NewBoard />;
+  if (route.name === "backup") return <BackupExport pending={route.pending} />;
   if (!board || board.id !== id) return <p class="muted">{loadingId ? "読み込み中…" : ""}</p>;
 
   if (

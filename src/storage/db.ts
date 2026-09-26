@@ -5,11 +5,15 @@ import {
   type IDBPTransaction,
   type StoreNames,
 } from "idb";
-import type { Board } from "../domain/types";
+import type { Board, Preferences } from "../domain/types";
 
 export interface PhotoBucketDB extends DBSchema {
   boards: { key: string; value: Board };
-  photos: { key: string; value: StoredPhoto; indexes: { byBoard: string } };
+  photos: {
+    key: string;
+    value: StoredPhoto;
+    indexes: { byBoard: string; byBoardSize: [string, number] };
+  };
   meta: { key: string; value: unknown };
 }
 
@@ -25,6 +29,8 @@ export interface StoredPhoto {
   type: string;
   bytes: ArrayBuffer;
   thumbBytes: ArrayBuffer;
+  /** Size of `bytes` (not the thumbnail), indexed with boardId to total a board without reading it. */
+  byteLength: number;
   width: number;
   height: number;
 }
@@ -40,8 +46,11 @@ export type WriteTx = IDBPTransaction<
   "readwrite"
 >;
 
-/** A migration upgrades the schema from version i to i + 1 (index i). */
-export type Migration = (db: IDBPDatabase<PhotoBucketDB>, tx: UpgradeTx) => void;
+/**
+ * A migration upgrades the schema from version i to i + 1 (index i). An async migration may only
+ * await IndexedDB requests of `tx`, or the upgrade transaction closes under it.
+ */
+export type Migration = (db: IDBPDatabase<PhotoBucketDB>, tx: UpgradeTx) => void | Promise<void>;
 
 export const MIGRATIONS: Migration[] = [
   // 0 → 1: initial schema
@@ -51,14 +60,31 @@ export const MIGRATIONS: Migration[] = [
     photos.createIndex("byBoard", "boardId");
     db.createObjectStore("meta");
   },
+  // 1 → 2: photo byteLength + byBoardSize index; exportLog seeded from lastBackupAt (003)
+  async (_db, tx) => {
+    const photos = tx.objectStore("photos");
+    for (let c = await photos.openCursor(); c; c = await c.continue())
+      await c.update({ ...c.value, byteLength: c.value.bytes.byteLength });
+    photos.createIndex("byBoardSize", ["boardId", "byteLength"]);
+
+    const meta = tx.objectStore("meta");
+    const prefs = (await meta.get("preferences")) as Partial<Preferences> | undefined;
+    const at = prefs?.lastBackupAt;
+    if (!at) return;
+    const log: Record<string, string> = {};
+    for (const b of await tx.objectStore("boards").getAll()) if (b.updatedAt <= at) log[b.id] = at;
+    await meta.put(log, "exportLog");
+  },
 ];
 
 export const openPhotoBucketDB = (name = DB_NAME, migrations = MIGRATIONS) =>
   openDB<PhotoBucketDB>(name, migrations.length, {
     upgrade(db, oldVersion, newVersion, tx) {
       const target = newVersion ?? migrations.length;
-      for (let v = oldVersion; v < target; v++) migrations[v](db, tx);
-      void tx.objectStore("meta").put(target, "schemaVersion");
+      void (async () => {
+        for (let v = oldVersion; v < target; v++) await migrations[v](db, tx);
+        await tx.objectStore("meta").put(target, "schemaVersion");
+      })().catch(() => tx.abort());
     },
     blocking() {
       // A newer version of the app wants to upgrade: let it.

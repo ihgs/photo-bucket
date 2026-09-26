@@ -31,9 +31,10 @@ test("no request leaves the app's own origin during the main flows (constitution
   ]);
   await page.getByRole("button", { name: "ボードへ戻る" }).click();
   await page.getByRole("button", { name: "ボード一覧へ" }).click();
+  await page.getByRole("button", { name: "バックアップを書き出す" }).first().click();
   await Promise.all([
     page.waitForEvent("download"),
-    page.getByRole("button", { name: "バックアップを書き出す" }).first().click(),
+    page.getByRole("button", { name: "書き出す", exact: true }).click(),
   ]);
   expect(external).toEqual([]);
 });

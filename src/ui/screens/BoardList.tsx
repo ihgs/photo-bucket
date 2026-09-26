@@ -6,7 +6,8 @@ import type { Board } from "../../domain/types";
 import { deleteBoard, listBoards } from "../../storage/boards";
 import { confirm } from "../components/ConfirmDialog";
 import { showToast } from "../components/Toast";
-import { runExport, runImport } from "../backupActions";
+import { ImportDialog, inspectFiles, type FileError } from "../components/ImportDialog";
+import type { ImportSource } from "../../backup/importBackup";
 import { usePhotoUrl } from "../usePhotoUrl";
 import { closeBoard, currentBoard } from "../state/boardStore";
 
@@ -42,17 +43,27 @@ export const confirmDeleteBoard = async (board: Board) => {
   }
 };
 
-const ImportButton = ({ onDone }: { onDone: () => void }) => (
+interface Importing {
+  sources: ImportSource[];
+  errors: FileError[];
+}
+
+/** Picks backup files; opens the import dialog unless none of them can be read. */
+const ImportButton = ({ onOpen }: { onOpen: (i: Importing) => void }) => (
   <label class="btn">
     バックアップを読み込む
     <input
       type="file"
+      multiple
       class="visually-hidden"
       onChange={async (e) => {
         const input = e.currentTarget;
-        const file = input.files?.[0];
+        const files = [...(input.files ?? [])];
         input.value = "";
-        if (file && (await runImport(file))) onDone();
+        if (files.length === 0) return;
+        const r = await inspectFiles(files);
+        if (r.sources.length > 0) onOpen(r);
+        else showToast(r.errors[0].message);
       }}
     />
   </label>
@@ -60,11 +71,25 @@ const ImportButton = ({ onDone }: { onDone: () => void }) => (
 
 export const BoardList = () => {
   const [boards, setBoards] = useState<Board[] | null>(null);
+  const [importing, setImporting] = useState<Importing | null>(null);
   const reload = () => void listBoards().then(setBoards);
 
   useEffect(reload, []);
 
   if (boards === null) return <p class="muted">読み込み中…</p>;
+
+  const importDialog = importing && (
+    <ImportDialog
+      sources={importing.sources}
+      errors={importing.errors}
+      existingIds={boards.map((b) => b.id)}
+      onClose={() => {
+        setImporting(null);
+        closeBoard(); // the open board may have been overwritten or deleted
+        reload();
+      }}
+    />
+  );
 
   if (boards.length === 0) {
     return (
@@ -85,7 +110,8 @@ export const BoardList = () => {
             最初のボードを作る
           </button>
         </p>
-        <ImportButton onDone={reload} />
+        <ImportButton onOpen={setImporting} />
+        {importDialog}
       </div>
     );
   }
@@ -123,12 +149,13 @@ export const BoardList = () => {
           データはこの端末の中だけに保存されています。機種変更やブラウザのデータ消去に備えて、ときどき書き出しておきましょう。
         </p>
         <div class="btn-row">
-          <button type="button" class="btn" onClick={() => void runExport()}>
+          <button type="button" class="btn" onClick={() => navigate({ name: "backup" })}>
             バックアップを書き出す
           </button>
-          <ImportButton onDone={reload} />
+          <ImportButton onOpen={setImporting} />
         </div>
       </section>
+      {importDialog}
     </>
   );
 };

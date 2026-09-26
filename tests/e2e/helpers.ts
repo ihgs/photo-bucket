@@ -90,6 +90,7 @@ export const seedFullBoard = async (
             type: "image/jpeg",
             bytes: data,
             thumbBytes: data,
+            byteLength: data.byteLength,
             width: bitmap.width,
             height: bitmap.height,
           });
