@@ -1,5 +1,6 @@
 import type { Board, GridSize, Photo } from "../domain/types";
 import { normalizeBoardTitle } from "../domain/validation";
+import { forgetExportInTx } from "../backup/exportLog";
 import { getDb, withQuotaGuard } from "./db";
 import { deletePhotosInTx, deletePhotosOfBoardInTx, toStored } from "./photos";
 
@@ -72,8 +73,9 @@ export const saveBoard = (board: Board, opts: SaveOptions = {}) =>
 export const deleteBoard = (id: string) =>
   withQuotaGuard(async () => {
     const db = await getDb();
-    const tx = db.transaction(["boards", "photos"], "readwrite");
+    const tx = db.transaction(["boards", "photos", "meta"], "readwrite");
     await deletePhotosOfBoardInTx(tx, id);
     await tx.objectStore("boards").delete(id);
+    await forgetExportInTx(tx, [id]);
     await tx.done;
   });

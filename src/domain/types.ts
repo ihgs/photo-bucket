@@ -68,6 +68,7 @@ export interface Photo {
 
 export interface Preferences {
   exportIncludeTitle: boolean;
+  /** Not used since 003 (per-board export log); read only by the schema 1 → 2 migration. */
   lastBackupAt: string | null;
   lastOpenedBoardId: string | null;
 }

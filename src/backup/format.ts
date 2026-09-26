@@ -4,6 +4,8 @@ export const BACKUP_FORMAT = "photo-bucket-backup";
 export const BACKUP_FORMAT_VERSION = 1;
 /** The ZIP entry holding boards and photo metadata (contracts/backup-format.md). */
 export const BACKUP_MANIFEST = "backup.json";
+/** At most this many boards go into one backup file (FR-015). Reading has no limit. */
+export const BACKUP_MAX_BOARDS = 10;
 
 export interface BackupPhotoJson {
   id: string;

@@ -4,6 +4,7 @@ import { BOARD_TITLE_MAX, validateBoard } from "../domain/validation";
 import { importPhoto } from "../media/importPhoto";
 import { getDb, withQuotaGuard } from "../storage/db";
 import { deletePhotosOfBoardInTx, releasePhotoUrls, toStored } from "../storage/photos";
+import { forgetExportInTx } from "./exportLog";
 import { BACKUP_FORMAT, BACKUP_FORMAT_VERSION, BACKUP_MANIFEST, isPhotoType } from "./format";
 import { readZip, type ZipReader } from "./zip";
 
@@ -17,18 +18,22 @@ const MSG = {
   photo: "写真のデータが欠けています",
 };
 
-export interface ParsedPhoto {
+/** Where a photo of the backup is, without its bytes (data-model.md ImportSource). */
+export interface ImportPhotoInfo {
   id: string;
   boardId: string;
   width: number;
   height: number;
   type: string;
-  bytes: ArrayBuffer;
+  path: string;
 }
 
-export interface ParsedBackup {
+/** A checked backup file. Photo bytes are read later, one board at a time (research.md R1). */
+export interface ImportSource {
+  name: string;
+  zip: ZipReader;
   boards: Board[];
-  photos: ParsedPhoto[];
+  photos: Map<string, ImportPhotoInfo>;
 }
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null;
@@ -64,8 +69,14 @@ const readEntry = async (zip: ZipReader, name: string) => {
   }
 };
 
-/** Validates a .pbz backup file completely. Writes nothing (contracts/backup-format.md). */
-export const parseBackup = async (file: Blob): Promise<ParsedBackup> => {
+/**
+ * Validates a .pbz backup file: the manifest, every board and that every referenced photo has an
+ * entry. Photo bytes are not read here. Writes nothing (contracts/backup-format.md).
+ */
+export const inspectBackup = async (
+  file: Blob,
+  name = (file as File).name ?? "",
+): Promise<ImportSource> => {
   let zip: ZipReader;
   try {
     zip = await readZip(file);
@@ -96,7 +107,7 @@ export const parseBackup = async (file: Blob): Promise<ParsedBackup> => {
   }
   const boards = (json.boards as Board[]).map(pickBoard);
 
-  const entries = new Map<string, Omit<ParsedPhoto, "bytes"> & { path: string }>();
+  const entries = new Map<string, ImportPhotoInfo>();
   for (const p of json.photos) {
     if (
       !isObject(p) ||
@@ -118,34 +129,21 @@ export const parseBackup = async (file: Blob): Promise<ParsedBackup> => {
       path: p.path,
     });
   }
+  const names = new Set(zip.names());
+  const photos = new Map<string, ImportPhotoInfo>();
   for (const b of boards) {
     for (const c of b.cells) {
       if (!c.photoId) continue;
       const p = entries.get(c.photoId);
-      if (!p || p.boardId !== b.id) throw new BackupError(MSG.photo);
+      if (!p || p.boardId !== b.id || !names.has(p.path)) throw new BackupError(MSG.photo);
+      photos.set(p.id, p);
     }
   }
-  // Only read photos that are referenced by a cell.
-  const used = new Set(
-    boards.flatMap((b) => b.cells.flatMap((c) => (c.photoId ? [c.photoId] : []))),
-  );
-  const photos: ParsedPhoto[] = [];
-  for (const { path, ...p } of entries.values()) {
-    if (!used.has(p.id)) continue;
-    const bytes = await readEntry(zip, path);
-    if (!bytes) throw new BackupError(MSG.photo);
-    photos.push({ ...p, bytes: bytes.buffer });
-  }
-  return { boards, photos };
+  return { name, zip, boards, photos };
 };
 
-/** Boards in the backup whose id already exists on this device. */
-export const detectConflicts = (parsed: ParsedBackup, existingIds: readonly string[]) => {
-  const existing = new Set(existingIds);
-  return parsed.boards.filter((b) => existing.has(b.id));
-};
-
-export type Resolution = "overwrite" | "copy";
+/** What to do with one board of the backup. */
+export type BoardAction = "add" | "overwrite" | "copy";
 
 const RESTORED = "（復元）";
 const restoredTitle = (title: string) =>
@@ -154,76 +152,72 @@ const restoredTitle = (title: string) =>
 /** Decodes the photo to check it and makes a fresh thumbnail. */
 const defaultMakeThumb = async (blob: Blob) => (await importPhoto(blob)).thumbBlob;
 
-export interface ApplyOptions {
+export interface ImportBoardOptions {
   makeThumb?: (blob: Blob) => Promise<Blob>;
 }
 
 /**
- * Writes the backup in one transaction. Conflicting boards are overwritten or added as copies
- * with new ids, depending on `resolutions` (default: copy).
+ * Writes one board of the backup in one transaction: all of it or nothing (FR-001). Only this
+ * board's photos are read. "overwrite" replaces the board with the same id; "copy" adds it with
+ * new ids and "（復元）" appended to the title. Returns the board as written.
  */
-export const applyBackup = async (
-  parsed: ParsedBackup,
-  resolutions: Record<string, Resolution>,
-  opts: ApplyOptions = {},
-) => {
+export const importBoard = async (
+  source: ImportSource,
+  board: Board,
+  action: BoardAction,
+  opts: ImportBoardOptions = {},
+): Promise<Board> => {
   const makeThumb = opts.makeThumb ?? defaultMakeThumb;
-  const db = await getDb();
-  const existing = new Set(await db.getAllKeys("boards"));
-
-  const boards: Board[] = [];
+  const copy = action === "copy";
+  const boardId = copy ? crypto.randomUUID() : board.id;
+  const cells: Cell[] = [];
   const photos: Photo[] = [];
-  const overwrite: string[] = [];
-  const byId = new Map(parsed.photos.map((p) => [p.id, p]));
-
-  for (const board of parsed.boards) {
-    const conflict = existing.has(board.id);
-    const copy = conflict && (resolutions[board.id] ?? "copy") === "copy";
-    if (conflict && !copy) overwrite.push(board.id);
-    const boardId = copy ? crypto.randomUUID() : board.id;
-    const cells: Cell[] = [];
-    for (const c of board.cells) {
-      const cell = copy ? { ...c, id: crypto.randomUUID() } : { ...c };
-      if (c.photoId) {
-        const p = byId.get(c.photoId)!;
-        const blob = new Blob([p.bytes], { type: p.type });
-        let thumbBlob: Blob;
-        try {
-          thumbBlob = await makeThumb(blob);
-        } catch {
-          throw new BackupError(MSG.photo);
-        }
-        cell.photoId = copy ? crypto.randomUUID() : p.id;
-        photos.push({
-          id: cell.photoId,
-          boardId,
-          blob,
-          thumbBlob,
-          width: p.width,
-          height: p.height,
-        });
+  for (const c of board.cells) {
+    const cell = copy ? { ...c, id: crypto.randomUUID() } : { ...c };
+    if (c.photoId) {
+      const p = source.photos.get(c.photoId)!;
+      const bytes = await readEntry(source.zip, p.path);
+      if (!bytes) throw new BackupError(MSG.photo);
+      const blob = new Blob([bytes], { type: p.type });
+      let thumbBlob: Blob;
+      try {
+        thumbBlob = await makeThumb(blob);
+      } catch {
+        throw new BackupError(MSG.photo);
       }
-      cells.push(cell);
+      cell.photoId = copy ? crypto.randomUUID() : p.id;
+      photos.push({ id: cell.photoId, boardId, blob, thumbBlob, width: p.width, height: p.height });
     }
-    boards.push({
-      ...board,
-      id: boardId,
-      title: copy ? restoredTitle(board.title) : board.title,
-      cells,
-    });
+    cells.push(cell);
   }
+  const saved: Board = {
+    ...board,
+    id: boardId,
+    title: copy ? restoredTitle(board.title) : board.title,
+    cells,
+  };
 
   const stored = await Promise.all(photos.map(toStored));
   await withQuotaGuard(async () => {
-    const tx = db.transaction(["boards", "photos"], "readwrite");
-    for (const id of overwrite) {
-      await deletePhotosOfBoardInTx(tx, id);
-      await tx.objectStore("boards").delete(id);
+    const db = await getDb();
+    const tx = db.transaction(["boards", "photos", "meta"], "readwrite");
+    try {
+      if (action === "overwrite") await deletePhotosOfBoardInTx(tx, board.id);
+      await Promise.all(stored.map((p) => tx.objectStore("photos").put(p)));
+      await tx.objectStore("boards").put(saved);
+      await forgetExportInTx(tx, [boardId]);
+      await tx.done;
+    } catch (e) {
+      // Never leave half a board behind (FR-001).
+      try {
+        tx.abort();
+      } catch {
+        // already finished
+      }
+      await tx.done.catch(() => undefined);
+      throw e;
     }
-    await Promise.all(stored.map((p) => tx.objectStore("photos").put(p)));
-    await Promise.all(boards.map((b) => tx.objectStore("boards").put(b)));
-    await tx.done;
   });
   releasePhotoUrls(photos.map((p) => p.id));
-  return boards;
+  return saved;
 };

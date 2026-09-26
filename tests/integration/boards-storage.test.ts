@@ -9,6 +9,7 @@ import {
 } from "../../src/storage/boards";
 import { fakePhoto } from "../helpers";
 import { putPhotos } from "../../src/storage/photos";
+import { getExportLog, recordExport } from "../../src/backup/exportLog";
 
 beforeEach(async () => {
   await resetDbForTests();
@@ -57,5 +58,13 @@ describe("board storage", () => {
     await expect(saveBoard(broken, { deletePhotoIds: ["p1"] })).rejects.toBeTruthy();
     expect((await getBoard(a.id))?.title).toBe("A");
     expect(await db.getAllKeys("photos")).toEqual(["p1"]);
+  });
+
+  it("forgets the export record of a deleted board", async () => {
+    const a = await createBoard("A", { cols: 3, rows: 3 });
+    const b = await createBoard("B", { cols: 3, rows: 3 });
+    await recordExport([a.id, b.id], "2026-09-01T00:00:00.000Z");
+    await deleteBoard(a.id);
+    expect(await getExportLog()).toEqual({ [b.id]: "2026-09-01T00:00:00.000Z" });
   });
 });

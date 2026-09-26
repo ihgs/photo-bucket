@@ -53,4 +53,39 @@ test("no serious accessibility violations on any screen", async ({ page }) => {
   await page.getByRole("button", { name: "ボード一覧へ" }).click();
   await expect(page.locator(".board-item")).toHaveCount(1);
   await check(page, "board list");
+
+  // backup export screen and import dialog (003)
+  await page.getByRole("button", { name: "バックアップを書き出す" }).click();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "バックアップを書き出す" }),
+  ).toBeVisible();
+  await check(page, "backup export");
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "書き出す", exact: true }).click(),
+  ]);
+  await page.getByRole("button", { name: "ボード一覧へ" }).click();
+  await page.getByLabel("バックアップを読み込む").setInputFiles((await download.path())!);
+  const dialog = page.getByRole("dialog", { name: "バックアップを読み込む" });
+  await expect(dialog).toBeVisible();
+  await check(page, "import dialog");
+  await dialog.getByRole("button", { name: "読み込む" }).click();
+  await expect(page.getByRole("dialog", { name: "読み込みが終わりました" })).toBeVisible();
+  await check(page, "import result");
+});
+
+test("no serious accessibility violations on the export screen with more than 10 boards", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  for (let i = 1; i <= 12; i++) {
+    await createBoard(page, `ボード${String(i).padStart(2, "0")}`, "3×3");
+    await page.getByRole("button", { name: "ボード一覧へ" }).click();
+  }
+  await page.getByRole("button", { name: "バックアップを書き出す" }).click();
+  const boxes = page.getByRole("checkbox");
+  for (let i = 0; i < 10; i++) await boxes.nth(i).check();
+  await boxes.nth(10).click({ force: true });
+  await expect(page.locator(".export-limit")).toBeVisible();
+  await check(page, "backup export (limit reached)");
 });

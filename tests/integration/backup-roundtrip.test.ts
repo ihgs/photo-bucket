@@ -1,12 +1,21 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { upsertCell } from "../../src/domain/grid";
-import { exportBackup } from "../../src/backup/exportBackup";
+import { estimateBackupSize, exportBackup } from "../../src/backup/exportBackup";
+import { getExportLog } from "../../src/backup/exportLog";
+import * as shareImage from "../../src/media/shareImage";
+import { runExport } from "../../src/ui/backupActions";
 import { readZip } from "../../src/backup/zip";
-import { applyBackup, detectConflicts, parseBackup } from "../../src/backup/importBackup";
-import { createBoard, getBoard, listBoards, saveBoard } from "../../src/storage/boards";
+import { inspectBackup } from "../../src/backup/importBackup";
+import { planImport, runImportPlan, type ConflictAction } from "../../src/backup/importPlan";
+import {
+  createBoard,
+  deleteBoard,
+  getBoard,
+  listBoards,
+  saveBoard,
+} from "../../src/storage/boards";
 import { getDb, resetDbForTests } from "../../src/storage/db";
 import { attachPhoto, getPhoto, getPhotosOfBoard } from "../../src/storage/photos";
-import { getPreferences } from "../../src/storage/preferences";
 
 const bytes = (n: number, seed: number) =>
   Uint8Array.from({ length: n }, (_, i) => (i * 31 + seed) % 256);
@@ -38,6 +47,16 @@ const seed = async () => {
   return [(await getBoard(a.id))!, (await getBoard(b.id))!];
 };
 
+const restore = async (
+  file: Blob,
+  mode: "add" | "replace",
+  onConflict: ConflictAction = "skip",
+) => {
+  const existing = (await listBoards()).map((b) => b.id);
+  const plan = planImport([await inspectBackup(file)], existing, mode, onConflict);
+  return runImportPlan(plan, undefined, { makeThumb });
+};
+
 beforeEach(async () => {
   await resetDbForTests();
 });
@@ -50,16 +69,14 @@ describe("backup round trip (SC-007)", () => {
       photosBefore.map(async (p) => [p.id, new Uint8Array(await p.blob.arrayBuffer())] as const),
     );
 
-    const { blob, fileName } = await exportBackup();
+    const { blob, fileName } = await exportBackup([a.id, b.id]);
     expect(fileName).toMatch(/^photo-bucket-\d{8}-\d{4}\.pbz$/);
     expect(blob.type).toBe("application/zip");
-    expect((await getPreferences()).lastBackupAt).not.toBeNull();
     await resetDbForTests();
     expect(await listBoards()).toEqual([]);
 
-    const parsed = await parseBackup(blob);
-    expect(detectConflicts(parsed, [])).toEqual([]);
-    await applyBackup(parsed, {}, { makeThumb });
+    const outcome = await restore(blob, "add");
+    expect(outcome.results.map((r) => r.status)).toEqual(["added", "added"]);
 
     const restoredA = await getBoard(a.id);
     const restoredB = await getBoard(b.id);
@@ -84,11 +101,8 @@ describe("backup round trip (SC-007)", () => {
 
   it("overwrites or copies boards whose id already exists", async () => {
     const [a] = await seed();
-    const parsed = await parseBackup((await exportBackup([a.id])).blob);
-    const existing = (await listBoards()).map((x) => x.id);
-    expect(detectConflicts(parsed, existing).map((x) => x.id)).toEqual([a.id]);
-
-    await applyBackup(parsed, { [a.id]: "copy" }, { makeThumb });
+    const file = (await exportBackup([a.id])).blob;
+    await restore(file, "add", "copy");
     const all = await listBoards();
     expect(all).toHaveLength(3);
     const copy = all.find((x) => x.title === "縦長（復元）")!;
@@ -100,8 +114,56 @@ describe("backup round trip (SC-007)", () => {
 
     // overwrite: the edited original is replaced by the backup contents
     await saveBoard({ ...a, title: "編集済み", cells: [] });
-    await applyBackup(parsed, { [a.id]: "overwrite" }, { makeThumb });
+    await restore(file, "add", "overwrite");
     expect((await getBoard(a.id))?.title).toBe("縦長");
     expect(await (await getDb()).count("photos")).toBe(3);
+  });
+
+  it("restores the exported state with replace (SC-005)", async () => {
+    const [a, b] = await seed();
+    const file = (await exportBackup([a.id, b.id])).blob;
+    // after the backup: delete one, add one, edit one
+    await deleteBoard(b.id);
+    await createBoard("あとで作った", { cols: 3, rows: 3 });
+    await saveBoard({ ...a, title: "編集済み", cells: [] });
+
+    const outcome = await restore(file, "replace");
+    expect(outcome.keptExisting).toBe(false);
+    const after = await listBoards();
+    expect(after.map((x) => x.id).sort()).toEqual([a.id, b.id].sort());
+    expect(await getBoard(a.id)).toEqual(a);
+    expect(await getBoard(b.id)).toEqual(b);
+    expect(await (await getDb()).count("photos")).toBe(2);
+  });
+});
+
+describe("export size and record (FR-012, FR-019, SC-007)", () => {
+  it("estimates the file size within 10% without reading photos", async () => {
+    const [a, b] = await seed();
+    const est = await estimateBackupSize([a.id, b.id]);
+    const { blob } = await exportBackup([a.id, b.id]);
+    expect(Math.abs(est.total - blob.size) / blob.size).toBeLessThan(0.1);
+    expect(est.perBoard[a.id]).toBeGreaterThan(3000);
+    expect(est.perBoard[a.id] + est.perBoard[b.id]).toBeLessThanOrEqual(est.total);
+  });
+
+  it("records the export only when the file was handed over", async () => {
+    const [a, b] = await seed();
+    const share = vi.spyOn(shareImage, "shareOrDownload");
+    share.mockResolvedValueOnce("cancelled");
+    await runExport([a.id, b.id]);
+    expect(await getExportLog()).toEqual({});
+    share.mockResolvedValueOnce("downloaded");
+    await runExport([a.id]);
+    expect(Object.keys(await getExportLog())).toEqual([a.id]);
+    share.mockRestore();
+  });
+
+  it("stops when a photo of a board is missing", async () => {
+    const [a] = await seed();
+    await (await getDb()).delete("photos", a.cells.find((c) => c.photoId)!.photoId!);
+    await expect(exportBackup([a.id])).rejects.toThrow(
+      "『縦長』の写真を読み込めなかったため、書き出しを中止しました",
+    );
   });
 });

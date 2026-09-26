@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { parseBackup } from "../../src/backup/importBackup";
+import { inspectBackup } from "../../src/backup/importBackup";
 import { createZip } from "../../src/backup/zip";
 import { resetDbForTests, getDb } from "../../src/storage/db";
 
@@ -53,7 +53,7 @@ const valid = () => ({
 });
 
 const expectError = async (file: Blob | Promise<Blob>, message: string) => {
-  await expect(parseBackup(await file)).rejects.toThrow(message);
+  await expect(inspectBackup(await file)).rejects.toThrow(message);
   expect(await (await getDb()).count("boards")).toBe(0);
   expect(await (await getDb()).count("photos")).toBe(0);
 };
@@ -62,12 +62,12 @@ beforeEach(async () => {
   await resetDbForTests();
 });
 
-describe("parseBackup validation (contracts/backup-format.md)", () => {
+describe("inspectBackup validation (contracts/backup-format.md)", () => {
   it("accepts a valid file and ignores unknown fields", async () => {
-    const parsed = await parseBackup(await pbz(valid()));
+    const parsed = await inspectBackup(await pbz(valid()));
     expect(parsed.boards[0].id).toBe("b1");
     expect(parsed.boards[0].cells[0]).not.toHaveProperty("futureField");
-    expect(parsed.photos[0].bytes.byteLength).toBe(4);
+    expect(parsed.photos.get("p1")?.path).toBe("photos/p1.jpg");
   });
 
   it("rejects a file that is not a ZIP", async () => {

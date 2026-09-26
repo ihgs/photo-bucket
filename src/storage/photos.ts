@@ -68,15 +68,19 @@ export const detachPhoto = async (board: Board, row: number, col: number) => {
 };
 
 /** Converts a photo for storage. Must run before a transaction starts (it awaits blob reads). */
-export const toStored = async (p: Photo): Promise<StoredPhoto> => ({
-  id: p.id,
-  boardId: p.boardId,
-  type: p.blob.type || "image/jpeg",
-  bytes: await p.blob.arrayBuffer(),
-  thumbBytes: await p.thumbBlob.arrayBuffer(),
-  width: p.width,
-  height: p.height,
-});
+export const toStored = async (p: Photo): Promise<StoredPhoto> => {
+  const bytes = await p.blob.arrayBuffer();
+  return {
+    id: p.id,
+    boardId: p.boardId,
+    type: p.blob.type || "image/jpeg",
+    bytes,
+    thumbBytes: await p.thumbBlob.arrayBuffer(),
+    byteLength: bytes.byteLength,
+    width: p.width,
+    height: p.height,
+  };
+};
 
 export const fromStored = (s: StoredPhoto): Photo => ({
   id: s.id,
