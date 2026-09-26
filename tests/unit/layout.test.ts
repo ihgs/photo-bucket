@@ -45,6 +45,21 @@ describe("layoutBoard geometry", () => {
     });
   }
 
+  for (const size of GRID_SIZES) {
+    it(`${size.cols}×${size.rows}: only the board's four outer corners are rounded`, () => {
+      const board = makeBoard({ size });
+      const l = layoutBoard(board, { width: 1200, includeTitle: false, measure: monoMeasure });
+      const last = { row: size.rows - 1, col: size.cols - 1 };
+      for (const c of l.cells) {
+        const [tl, tr, br, bl] = c.radii;
+        expect(tl > 0).toBe(c.row === 0 && c.col === 0);
+        expect(tr > 0).toBe(c.row === 0 && c.col === last.col);
+        expect(br > 0).toBe(c.row === last.row && c.col === last.col);
+        expect(bl > 0).toBe(c.row === last.row && c.col === 0);
+      }
+    });
+  }
+
   it("scales proportionally and keeps the same line breaks at any width", () => {
     const board = makeBoard({
       size: { cols: 3, rows: 4 },
