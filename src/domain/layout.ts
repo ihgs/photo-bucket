@@ -20,7 +20,7 @@ export const TITLE_BAND_COLOR = `rgba(0, 0, 0, ${TITLE_BAND_ALPHA})`;
 export const CAPTION_BAND_COLOR = "rgba(0, 0, 0, 0.55)";
 
 const REF_WIDTH = 1000;
-const GAP_RATIO = 0.012; // inner gap relative to width
+const GAP_RATIO = 0.006; // inner gap relative to width
 const LINE_HEIGHT = 1.25;
 
 export interface TextBlock {
@@ -53,13 +53,17 @@ export interface CaptionBand {
   color: string;
 }
 
+export type CornerRadii = [number, number, number, number];
+
 export interface CellLayout {
   row: number;
   col: number;
   x: number;
   y: number;
   size: number;
-  radius: number;
+  /** Corner radii in CSS order (top-left, top-right, bottom-right, bottom-left). Only the board's
+   * four outer corners are rounded. */
+  radii: CornerRadii;
   kind: "empty" | "todo" | "done";
   cell?: Cell;
   band?: CategoryBand;
@@ -199,7 +203,18 @@ const layoutReference = (board: Board, includeTitle: boolean, measure: Measure):
       const x = col * slot + gap / 2;
       const y = row * slot + gap / 2;
       const cell = byPos.get(`${row},${col}`);
-      const base = { row, col, x, y, size, radius: size * 0.06 };
+      const r = size * 0.06;
+      const top = row === 0;
+      const bottom = row === rows - 1;
+      const left = col === 0;
+      const right = col === cols - 1;
+      const radii: CornerRadii = [
+        top && left ? r : 0,
+        top && right ? r : 0,
+        bottom && right ? r : 0,
+        bottom && left ? r : 0,
+      ];
+      const base = { row, col, x, y, size, radii };
       const pad = size * 0.08;
       if (!cell) {
         cells.push({ ...base, kind: "empty" });
@@ -324,7 +339,7 @@ export const layoutBoard = (board: Board, opts: LayoutOptions): BoardLayout => {
       x: c.x * k,
       y: c.y * k,
       size: c.size * k,
-      radius: c.radius * k,
+      radii: c.radii.map((r) => r * k) as CornerRadii,
       band: c.band && {
         ...c.band,
         height: c.band.height * k,

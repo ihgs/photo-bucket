@@ -1,5 +1,5 @@
 import { DEFAULT_CROP, rotationMatrix, rotationOf, sourceRect } from "../domain/crop";
-import { CELL_BACKGROUND, layoutBoard, type TextBlock } from "../domain/layout";
+import { CELL_BACKGROUND, layoutBoard, type CornerRadii, type TextBlock } from "../domain/layout";
 import { createCanvasMeasure, fontString, ready } from "../domain/measure";
 import type { Board, GridSize } from "../domain/types";
 import { getPhoto } from "../storage/photos";
@@ -22,13 +22,14 @@ export const exportFileName = (title: string, date = new Date()) =>
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
-const roundRect = (ctx: Ctx, x: number, y: number, w: number, h: number, r: number) => {
+const roundRect = (ctx: Ctx, x: number, y: number, w: number, h: number, radii: CornerRadii) => {
+  const [tl, tr, br, bl] = radii;
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
+  ctx.moveTo(x + tl, y);
+  ctx.arcTo(x + w, y, x + w, y + h, tr);
+  ctx.arcTo(x + w, y + h, x, y + h, br);
+  ctx.arcTo(x, y + h, x, y, bl);
+  ctx.arcTo(x, y, x + w, y, tl);
   ctx.closePath();
 };
 
@@ -90,7 +91,7 @@ export const renderBoard = async (board: Board, opts: RenderOptions): Promise<Bl
   for (const c of layout.cells) {
     if (c.kind === "empty") continue;
     ctx.save();
-    roundRect(ctx, c.x, c.y, c.size, c.size, c.radius);
+    roundRect(ctx, c.x, c.y, c.size, c.size, c.radii);
     ctx.clip();
     ctx.fillStyle = CELL_BACKGROUND;
     ctx.fillRect(c.x, c.y, c.size, c.size);

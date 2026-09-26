@@ -61,7 +61,7 @@ export const CellTile = ({ layout: c, selected, onClick, photo }: Props) => (
       top: `${c.y}px`,
       width: `${c.size}px`,
       height: `${c.size}px`,
-      borderRadius: `${c.radius}px`,
+      borderRadius: c.radii.map((r) => `${r}px`).join(" "),
     }}
   >
     {c.kind === "empty" && (
