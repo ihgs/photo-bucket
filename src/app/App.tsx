@@ -52,7 +52,7 @@ const Screen = ({ route }: { route: Route }) => {
 
   if (route.name === "list") return <BoardList />;
   if (route.name === "new") return <NewBoard />;
-  if (route.name === "backup") return <BackupExport pending={route.pending} />;
+  if (route.name === "backup") return <BackupExport />;
   if (!board || board.id !== id) return <p class="muted">{loadingId ? "読み込み中…" : ""}</p>;
 
   if (
@@ -95,7 +95,7 @@ export const App = () => {
   return (
     <>
       <main class="app">
-        <AppBanners route={route} />
+        <AppBanners />
         <Screen route={route} />
       </main>
       <ConfirmDialogHost />

@@ -19,14 +19,6 @@ export const exportStateOf = (board: Board, log: ExportLog, now = Date.now()): E
   return "fresh";
 };
 
-/** True when a board with photos was never exported, changed since, or is 30+ days old. */
-export const needsReminder = (
-  boards: readonly Board[],
-  withPhotos: ReadonlySet<string>,
-  log: ExportLog,
-  now = Date.now(),
-) => boards.some((b) => withPhotos.has(b.id) && exportStateOf(b, log, now) !== "fresh");
-
 export const getExportLog = async (): Promise<ExportLog> =>
   ((await (await getDb()).get("meta", KEY)) as ExportLog | undefined) ?? {};
 
@@ -67,15 +59,3 @@ export const sortForExport = (boards: readonly Board[], log: ExportLog, now = Da
   );
   return keyed.map((k) => k.b);
 };
-
-/** Boards the backup reminder asks for, in the given order, at most 10 (FR-019). */
-export const pendingSelection = (
-  boards: readonly Board[],
-  withPhotos: ReadonlySet<string>,
-  log: ExportLog,
-  now = Date.now(),
-) =>
-  boards
-    .filter((b) => withPhotos.has(b.id) && exportStateOf(b, log, now) !== "fresh")
-    .slice(0, BACKUP_MAX_BOARDS)
-    .map((b) => b.id);

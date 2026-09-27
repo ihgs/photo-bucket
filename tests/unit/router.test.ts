@@ -12,7 +12,6 @@ describe("parseRoute", () => {
     ["#/boards/abc/export", { name: "export", boardId: "abc" }],
     ["#/boards/abc/settings", { name: "settings", boardId: "abc" }],
     ["#/backup", { name: "backup" }],
-    ["#/backup/pending", { name: "backup", pending: true }],
   ])("%s", (hash, route) => {
     expect(parseRoute(hash)).toEqual(route);
     expect(parseRoute(routeToHash(parseRoute(hash)))).toEqual(route);

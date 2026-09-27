@@ -44,7 +44,6 @@ test("US5: switch boards, back up, delete, restore; a broken file changes nothin
   await createBoard(page, "2026年やりたいこと", "5×5");
   await page.getByRole("button", { name: "ボード一覧へ" }).click();
   await expect(page.locator(".board-item")).toHaveCount(2);
-  await expect(page.getByText("バックアップをおすすめします")).toBeVisible();
 
   // switch between boards
   await page.getByRole("button", { name: /^北海道旅行/ }).click();
@@ -56,7 +55,6 @@ test("US5: switch boards, back up, delete, restore; a broken file changes nothin
 
   // back up everything
   const backupPath = await exportAll(page, info.outputPath("backup.pbz"));
-  await expect(page.getByText("バックアップをおすすめします")).toHaveCount(0);
 
   // the list has no delete buttons; delete one board from its settings (FR-023)
   await expect(page.getByRole("button", { name: /を削除$/ })).toHaveCount(0);
