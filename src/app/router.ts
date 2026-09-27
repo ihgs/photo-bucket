@@ -3,7 +3,7 @@ import { signal } from "@preact/signals";
 export type Route =
   | { name: "list" }
   | { name: "new" }
-  | { name: "backup"; pending?: boolean }
+  | { name: "backup" }
   | { name: "board"; boardId: string }
   | { name: "cell"; boardId: string; row: number; col: number }
   | { name: "crop"; boardId: string; row: number; col: number }
@@ -19,8 +19,6 @@ export const parseRoute = (hash: string): Route => {
   if (parts.length === 0) return LIST;
   if (parts[0] === "new" && parts.length === 1) return { name: "new" };
   if (parts[0] === "backup" && parts.length === 1) return { name: "backup" };
-  if (parts[0] === "backup" && parts.length === 2 && parts[1] === "pending")
-    return { name: "backup", pending: true };
   if (parts[0] !== "boards" || !parts[1]) return LIST;
   const boardId = parts[1];
   if (parts.length === 2) return { name: "board", boardId };
@@ -42,7 +40,7 @@ export const routeToHash = (route: Route): string => {
     case "new":
       return "#/new";
     case "backup":
-      return route.pending ? "#/backup/pending" : "#/backup";
+      return "#/backup";
     case "board":
       return `#/boards/${encodeURIComponent(route.boardId)}`;
     case "export":

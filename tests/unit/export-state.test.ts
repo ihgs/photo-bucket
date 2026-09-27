@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { exportBackup } from "../../src/backup/exportBackup";
-import {
-  exportStateOf,
-  needsReminder,
-  pendingSelection,
-  sortForExport,
-} from "../../src/backup/exportLog";
+import { exportStateOf, sortForExport } from "../../src/backup/exportLog";
 import { makeBoard } from "../helpers";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -30,28 +25,7 @@ describe("exportStateOf", () => {
   });
 });
 
-describe("needsReminder", () => {
-  const a = makeBoard({ id: "a", updatedAt: iso(now - 10 * DAY) });
-  const b = makeBoard({ id: "b", updatedAt: iso(now - 10 * DAY) });
-  const fresh = { a: iso(now - DAY), b: iso(now - DAY) };
-
-  it("does not remind about boards without photos", () => {
-    expect(needsReminder([a, b], new Set(), {}, now)).toBe(false);
-  });
-  it("reminds when a board with photos was never exported", () => {
-    expect(needsReminder([a, b], new Set(["b"]), { a: fresh.a }, now)).toBe(true);
-  });
-  it("reminds when a board with photos changed or is stale", () => {
-    expect(needsReminder([a], new Set(["a"]), { a: iso(now - 20 * DAY) }, now)).toBe(true);
-    const old = makeBoard({ id: "a", updatedAt: iso(now - 90 * DAY) });
-    expect(needsReminder([old], new Set(["a"]), { a: iso(now - 31 * DAY) }, now)).toBe(true);
-  });
-  it("does not remind when every board with photos is fresh", () => {
-    expect(needsReminder([a, b], new Set(["a", "b"]), fresh, now)).toBe(false);
-  });
-});
-
-describe("sortForExport and pendingSelection (FR-019, FR-020)", () => {
+describe("sortForExport (FR-020)", () => {
   const b = (id: string, updatedDaysAgo: number) =>
     makeBoard({ id, title: id, updatedAt: iso(now - updatedDaysAgo * DAY) });
 
@@ -71,14 +45,6 @@ describe("sortForExport and pendingSelection (FR-019, FR-020)", () => {
     const order = sortForExport(boards, log, now).map((x) => x.id);
     expect(order.slice(0, 4)).toEqual(["x7", "x9", "x3", "x5"]);
     expect(order).toHaveLength(12);
-  });
-
-  it("selects up to 10 boards with photos that need a backup", () => {
-    const boards = Array.from({ length: 12 }, (_, i) => b(`y${i}`, 5));
-    const withPhotos = new Set(boards.map((x) => x.id).filter((id) => id !== "y0"));
-    const ids = pendingSelection(boards, withPhotos, {}, now);
-    expect(ids).toHaveLength(10);
-    expect(ids).not.toContain("y0");
   });
 });
 

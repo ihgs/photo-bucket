@@ -2,13 +2,7 @@ import { ArrowLeft } from "lucide-preact";
 import { useEffect, useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { estimateBackupSize } from "../../backup/exportBackup";
-import {
-  exportStateOf,
-  getExportLog,
-  pendingSelection,
-  sortForExport,
-  type ExportLog,
-} from "../../backup/exportLog";
+import { exportStateOf, getExportLog, sortForExport, type ExportLog } from "../../backup/exportLog";
 import { BACKUP_MAX_BOARDS } from "../../backup/format";
 import type { Board } from "../../domain/types";
 import { listBoards } from "../../storage/boards";
@@ -36,7 +30,7 @@ interface Loaded {
 }
 
 /** Chooses up to 10 boards and writes them to one backup file (contracts/backup-export.md). */
-export const BackupExport = ({ pending = false }: { pending?: boolean }) => {
+export const BackupExport = () => {
   const [data, setData] = useState<Loaded | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [limitHit, setLimitHit] = useState<string | null>(null);
@@ -56,19 +50,12 @@ export const BackupExport = ({ pending = false }: { pending?: boolean }) => {
       if (boards.length > BACKUP_MAX_BOARDS) setSelected(new Set());
       return;
     }
-    if (pending) {
-      const withPhotos = new Set(
-        all.filter((b) => b.cells.some((c) => c.photoId)).map((b) => b.id),
-      );
-      setSelected(new Set(pendingSelection(boards, withPhotos, log)));
-    } else if (boards.length <= BACKUP_MAX_BOARDS) {
-      setSelected(new Set(boards.map((b) => b.id)));
-    }
+    if (boards.length <= BACKUP_MAX_BOARDS) setSelected(new Set(boards.map((b) => b.id)));
   };
 
   useEffect(() => {
     void load(true);
-  }, [pending]);
+  }, []);
 
   if (!data) return <p class="muted">読み込み中…</p>;
 
