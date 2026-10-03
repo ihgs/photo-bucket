@@ -689,6 +689,8 @@ label.btn[aria-disabled="true"] {
 /* ---- home-screen install banner (contracts/install-banner.md) ---- */
 .install-banner {
   display: block;
+  /* the empty list centres its text; the banner reads better left-aligned */
+  text-align: left;
 }
 .install-banner h2 {
   font-size: 1rem;
