@@ -565,7 +565,6 @@ input[type="range"] {
   position: absolute;
   white-space: pre;
   overflow: hidden;
-  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
 }
 .move-hint {
   font-weight: 600;

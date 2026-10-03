@@ -8,7 +8,10 @@ import { canvasToJpeg, createCanvas } from "./importPhoto";
 export const EXPORT_LONG_EDGE = 2400;
 const EXPORT_QUALITY = 0.92;
 
-/** Output size: the long edge is 2400px and the aspect ratio equals the board's (contracts/export-image.md). */
+/**
+ * Size of the grid in the output: the long edge is 2400px and the aspect ratio equals the board's.
+ * A title, when included, adds a band above it (contracts/export-image.md).
+ */
 export const exportSize = (size: GridSize) =>
   size.cols >= size.rows
     ? { width: EXPORT_LONG_EDGE, height: (EXPORT_LONG_EDGE * size.rows) / size.cols }
@@ -57,7 +60,7 @@ const loadBitmap = async (photoId: string) => {
 
 export interface RenderOptions {
   includeTitle: boolean;
-  /** Output width; defaults to the export size. Height follows the board's aspect ratio. */
+  /** Output width; defaults to the export size. Height follows the grid, plus the title band. */
   width?: number;
 }
 
@@ -127,7 +130,7 @@ export const renderBoard = async (board: Board, opts: RenderOptions): Promise<Bl
     const t = layout.titleBand;
     ctx.fillStyle = t.color;
     ctx.fillRect(t.x, t.y, t.width, t.height);
-    drawText(ctx, t.textBlock, true);
+    drawText(ctx, t.textBlock);
   }
 
   return canvasToJpeg(canvas, EXPORT_QUALITY);

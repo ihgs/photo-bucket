@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  TITLE_BAND_ALPHA,
-  compositeOver,
+  BOARD_BACKGROUND,
+  TEXT_COLOR,
   contrastRatio,
   layoutBoard,
   wrapText,
@@ -106,29 +106,30 @@ describe("layoutBoard geometry", () => {
   });
 });
 
-describe("title overlay", () => {
-  it("overlays the title band without changing the size", () => {
+describe("title band", () => {
+  it("adds the band above the grid without covering any cell", () => {
     const board = makeBoard({ size: { cols: 3, rows: 4 }, title: "2026年やりたいこと" });
     const without = layoutBoard(board, { width: 1800, includeTitle: false, measure: monoMeasure });
     const withTitle = layoutBoard(board, { width: 1800, includeTitle: true, measure: monoMeasure });
-    expect(withTitle.width).toBe(without.width);
-    expect(withTitle.height).toBe(without.height);
-    expect(withTitle.cells).toEqual(without.cells);
     const band = withTitle.titleBand!;
-    expect(band.y).toBe(0);
-    expect(band.x).toBe(0);
-    expect(band.width).toBe(1800);
-    expect(band.text).toBe("2026年やりたいこと");
+    expect(band).toMatchObject({ x: 0, y: 0, width: 1800, text: "2026年やりたいこと" });
+    expect(band.height).toBeCloseTo(1800 * 0.11, 6);
+    expect(withTitle.width).toBe(without.width);
+    expect(withTitle.height).toBeCloseTo(without.height + band.height, 6);
+    // every cell keeps its size and moves down by exactly the band
+    withTitle.cells.forEach((c, i) => {
+      expect(c.size).toBeCloseTo(without.cells[i].size, 6);
+      expect(c.x).toBeCloseTo(without.cells[i].x, 6);
+      expect(c.y).toBeCloseTo(without.cells[i].y + band.height, 6);
+      expect(c.y).toBeGreaterThanOrEqual(band.height);
+    });
     expect(without.titleBand).toBeUndefined();
   });
 
-  it("keeps white text readable on white and black backgrounds (>= 4.5:1)", () => {
-    const white: [number, number, number] = [255, 255, 255];
-    const black: [number, number, number] = [0, 0, 0];
-    const onWhite = compositeOver(black, TITLE_BAND_ALPHA, white);
-    const onBlack = compositeOver(black, TITLE_BAND_ALPHA, black);
-    expect(contrastRatio(white, onWhite)).toBeGreaterThanOrEqual(4.5);
-    expect(contrastRatio(white, onBlack)).toBeGreaterThanOrEqual(4.5);
+  it("draws the title in dark text on the board background (>= 4.5:1)", () => {
+    const hex = (h: string) =>
+      [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
+    expect(contrastRatio(hex(TEXT_COLOR), hex(BOARD_BACKGROUND))).toBeGreaterThanOrEqual(4.5);
   });
 });
 
