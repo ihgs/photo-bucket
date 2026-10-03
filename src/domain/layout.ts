@@ -16,9 +16,12 @@ export const BOARD_BACKGROUND = "#f4efe6";
 export const CELL_BACKGROUND = "#ffffff";
 export const TEXT_COLOR = "#1f2328";
 export const CAPTION_BAND_COLOR = "rgba(0, 0, 0, 0.55)";
+/** Thin line inside cells without a photo, so white cells stay apart now that cells touch. */
+export const CELL_BORDER_COLOR = "#d8cfbf";
+const CELL_BORDER_RATIO = 0.002; // line width relative to the board width
 
 const REF_WIDTH = 1000;
-const GAP_RATIO = 0.006; // inner gap relative to width
+const GAP_RATIO = 0; // inner gap relative to width: cells touch
 const LINE_HEIGHT = 1.25;
 
 export interface TextBlock {
@@ -67,6 +70,8 @@ export interface CellLayout {
   band?: CategoryBand;
   caption?: CaptionBand;
   text?: TextBlock;
+  /** Line drawn just inside the cell's edge (cells without a photo only). */
+  border?: { width: number; color: string };
 }
 
 export interface TitleBand {
@@ -282,6 +287,7 @@ const layoutReference = (board: Board, includeTitle: boolean, measure: Measure):
           ...base,
           kind: "todo",
           cell,
+          border: { width: width * CELL_BORDER_RATIO, color: CELL_BORDER_COLOR },
           band: {
             category: info.id,
             label: info.label,
@@ -346,6 +352,7 @@ export const layoutBoard = (board: Board, opts: LayoutOptions): BoardLayout => {
       },
       caption: c.caption && { ...c.caption, y: c.caption.y * k, height: c.caption.height * k },
       text: c.text && scaleText(c.text, k),
+      border: c.border && { ...c.border, width: c.border.width * k },
     })),
     titleBand: ref.titleBand && {
       ...ref.titleBand,

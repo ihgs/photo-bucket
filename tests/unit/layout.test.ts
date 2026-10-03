@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BOARD_BACKGROUND,
+  CELL_BORDER_COLOR,
   TEXT_COLOR,
   contrastRatio,
   layoutBoard,
@@ -103,6 +104,19 @@ describe("layoutBoard geometry", () => {
     expect(l.cells.map((c) => c.kind).slice(0, 3)).toEqual(["todo", "done", "empty"]);
     expect(l.cells[0].band).toBeDefined();
     expect(l.cells[1].caption).toBeDefined();
+  });
+
+  it("draws a thin line only around cells without a photo, scaled with the board", () => {
+    const board = makeBoard({
+      size: { cols: 3, rows: 3 },
+      cells: [cell(0, 0, "a"), cell(0, 1, "b", true)],
+    });
+    const small = layoutBoard(board, { width: 300, includeTitle: false, measure: monoMeasure });
+    const big = layoutBoard(board, { width: 2400, includeTitle: false, measure: monoMeasure });
+    expect(small.cells[0].border).toEqual({ width: 0.6, color: CELL_BORDER_COLOR });
+    expect(big.cells[0].border?.width).toBeCloseTo(4.8, 6);
+    expect(small.cells[1].border).toBeUndefined(); // photo: cells touch
+    expect(small.cells[2].border).toBeUndefined(); // empty: not drawn in the image
   });
 });
 
