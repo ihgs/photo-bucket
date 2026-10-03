@@ -7,6 +7,7 @@ import {
   fillCell,
   fixturePath,
   openExport,
+  openBackupExport,
 } from "./helpers";
 
 const check = async (page: Page, name: string) => {
@@ -55,7 +56,7 @@ test("no serious accessibility violations on any screen", async ({ page }) => {
   await check(page, "board list");
 
   // backup export screen and import dialog (003)
-  await page.getByRole("button", { name: "バックアップを書き出す" }).click();
+  await openBackupExport(page);
   await expect(
     page.getByRole("heading", { level: 1, name: "バックアップを書き出す" }),
   ).toBeVisible();
@@ -82,10 +83,48 @@ test("no serious accessibility violations on the export screen with more than 10
     await createBoard(page, `ボード${String(i).padStart(2, "0")}`, "3×3");
     await page.getByRole("button", { name: "ボード一覧へ" }).click();
   }
-  await page.getByRole("button", { name: "バックアップを書き出す" }).click();
+  await openBackupExport(page);
   const boxes = page.getByRole("checkbox");
   for (let i = 0; i < 10; i++) await boxes.nth(i).check();
   await boxes.nth(10).click({ force: true });
   await expect(page.locator(".export-limit")).toBeVisible();
   await check(page, "backup export (limit reached)");
+});
+
+test("no serious accessibility violations with the install banner", async ({
+  page,
+  browser,
+  baseURL,
+}) => {
+  // (a) Chrome's install offer: the one-tap banner
+  await page.addInitScript(() => {
+    window.addEventListener("load", () => {
+      const e = new Event("beforeinstallprompt", { cancelable: true }) as Event & {
+        prompt: () => Promise<void>;
+        userChoice: Promise<{ outcome: string }>;
+      };
+      e.prompt = async () => undefined;
+      e.userChoice = Promise.resolve({ outcome: "dismissed" });
+      setTimeout(() => window.dispatchEvent(e), 50);
+    });
+  });
+  await page.goto("./");
+  await expect(page.getByRole("button", { name: "アプリとして追加" })).toBeVisible();
+  await check(page, "install banner (one tap)");
+
+  // (b) iPhone: steps with the share icon and the data warning
+  const iphone = await browser.newContext({
+    userAgent:
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+    baseURL, // a new context does not inherit the project's baseURL
+  });
+  const p = await iphone.newPage();
+  await createBoard(p, "旅", "3×3");
+  await p.getByRole("button", { name: "ボード一覧へ" }).click();
+  await expect(p.locator(".install-banner")).toContainText("引き継がれません");
+  await check(p, "install banner (iPhone)");
+  await iphone.close();
 });
