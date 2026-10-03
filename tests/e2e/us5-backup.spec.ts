@@ -1,6 +1,14 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { cell, closeSheet, createBoard, disableWebShare, fillCell, fixturePath } from "./helpers";
+import {
+  cell,
+  closeSheet,
+  createBoard,
+  disableWebShare,
+  fillCell,
+  fixturePath,
+  openBackupExport,
+} from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await disableWebShare(page);
@@ -19,7 +27,7 @@ const exportSelected = async (page: Page, path: string) => {
 
 /** Backs up every board (10 or fewer) from the board list and saves the file at `path`. */
 const exportAll = async (page: Page, path: string) => {
-  await page.getByRole("button", { name: "バックアップを書き出す" }).first().click();
+  await openBackupExport(page);
   await expect(
     page.getByRole("heading", { level: 1, name: "バックアップを書き出す" }),
   ).toBeVisible();
@@ -149,7 +157,7 @@ test("US3: choose boards to export, with sizes and export state", async ({ page 
     await createBoard(page, title, "3×3");
     await page.getByRole("button", { name: "ボード一覧へ" }).click();
   }
-  await page.getByRole("button", { name: "バックアップを書き出す" }).click();
+  await openBackupExport(page);
   // 10 or fewer: all selected at first
   for (const t of ["東京", "大阪", "京都", "奈良"]) await expect(checkbox(page, t)).toBeChecked();
   await expect(checkbox(page, "東京")).toHaveAccessibleName(/未書き出し/);
@@ -177,7 +185,7 @@ test("US4: at most 10 boards per file; two files restore all 12", async ({ page 
     await createBoard(page, title, "3×3");
     await page.getByRole("button", { name: "ボード一覧へ" }).click();
   }
-  await page.getByRole("button", { name: "バックアップを書き出す" }).click();
+  await openBackupExport(page);
   await expect(page.getByText("1 回に書き出せるのは 10 ボードまでです")).toBeVisible();
   await expect(page.getByRole("button", { name: "すべて選択" })).toHaveCount(0);
   for (const t of titles) await expect(checkbox(page, t)).not.toBeChecked();

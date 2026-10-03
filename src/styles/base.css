@@ -685,3 +685,28 @@ label.btn[aria-disabled="true"] {
   border-top: 1px solid var(--border, #e7e3da);
   z-index: 40;
 }
+
+/* ---- home-screen install banner (contracts/install-banner.md) ---- */
+.install-banner {
+  display: block;
+}
+.install-banner h2 {
+  font-size: 1rem;
+  margin: 0 0 4px;
+}
+.install-banner p {
+  margin: 0 0 8px;
+}
+.install-steps {
+  margin: 0 0 8px;
+  padding-left: 1.4em;
+}
+.install-icon {
+  vertical-align: -3px;
+  margin: 0 2px;
+}
+.install-warning {
+  border-top: 1px solid #e8c766;
+  padding-top: 8px;
+  margin-bottom: 8px;
+}

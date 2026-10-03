@@ -121,3 +121,13 @@ export const seedFullBoard = async (
     { title, cols, rows, bytes: photo.toString("base64") },
   );
 };
+
+/**
+ * Clicks "バックアップを書き出す" in the board list's backup section. The home-screen banner can
+ * show a button with the same name (004 FR-012), so the section is targeted explicitly.
+ */
+export const openBackupExport = (page: Page) =>
+  page
+    .getByRole("region", { name: "バックアップ", exact: true })
+    .getByRole("button", { name: "バックアップを書き出す" })
+    .click();
