@@ -98,6 +98,13 @@ export const renderBoard = async (board: Board, opts: RenderOptions): Promise<Bl
     ctx.clip();
     ctx.fillStyle = CELL_BACKGROUND;
     ctx.fillRect(c.x, c.y, c.size, c.size);
+    if (c.border) {
+      // Twice the width along the clipped edge leaves exactly `width` inside, like an inset shadow.
+      ctx.strokeStyle = c.border.color;
+      ctx.lineWidth = c.border.width * 2;
+      roundRect(ctx, c.x, c.y, c.size, c.size, c.radii);
+      ctx.stroke();
+    }
     if (c.kind === "done") {
       const b = bitmaps.get(c.cell!.photoId!);
       if (b) {
