@@ -63,7 +63,7 @@ export const BoardView = ({ board }: { board: Board }) => {
             <button type="button" class="btn" onClick={() => setMove({ active: true, from: null })}>
               移動
             </button>
-            {achieved === total && (
+            {board.cells.length > 0 && (
               <button
                 type="button"
                 class="btn btn-primary"

@@ -15,8 +15,6 @@ export type Measure = (text: string, fontPx: number, bold?: boolean) => number;
 export const BOARD_BACKGROUND = "#f4efe6";
 export const CELL_BACKGROUND = "#ffffff";
 export const TEXT_COLOR = "#1f2328";
-export const TITLE_BAND_ALPHA = 0.55;
-export const TITLE_BAND_COLOR = `rgba(0, 0, 0, ${TITLE_BAND_ALPHA})`;
 export const CAPTION_BAND_COLOR = "rgba(0, 0, 0, 0.55)";
 
 const REF_WIDTH = 1000;
@@ -194,14 +192,17 @@ const layoutReference = (board: Board, includeTitle: boolean, measure: Measure):
   const gap = width * GAP_RATIO;
   const slot = width / cols; // each cell sits in a square slot, inset by gap / 2
   const size = slot - gap;
-  const height = slot * rows;
+  // The title, when included, is a band added above the grid (it never covers cells).
+  const titleFont = width * 0.05;
+  const bandH = includeTitle ? titleFont * 2.2 : 0;
+  const height = bandH + slot * rows;
   const byPos = new Map(board.cells.map((c) => [`${c.row},${c.col}`, c]));
 
   const cells: CellLayout[] = [];
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const x = col * slot + gap / 2;
-      const y = row * slot + gap / 2;
+      const y = bandH + row * slot + gap / 2;
       const cell = byPos.get(`${row},${col}`);
       const r = size * 0.06;
       const top = row === 0;
@@ -296,18 +297,16 @@ const layoutReference = (board: Board, includeTitle: boolean, measure: Measure):
 
   let titleBand: TitleBand | undefined;
   if (includeTitle) {
-    const fontPx = width * 0.05;
-    const bandH = fontPx * 2.2;
     const tb = textBlock(
       board.title,
       {
         x: width * 0.05,
-        y: (bandH - fontPx * LINE_HEIGHT) / 2,
+        y: (bandH - titleFont * LINE_HEIGHT) / 2,
         maxWidth: width * 0.9,
-        fontPx,
+        fontPx: titleFont,
         maxLines: 1,
         bold: true,
-        color: "#ffffff",
+        color: TEXT_COLOR,
       },
       measure,
     );
@@ -317,7 +316,7 @@ const layoutReference = (board: Board, includeTitle: boolean, measure: Measure):
       y: 0,
       width,
       height: bandH,
-      color: TITLE_BAND_COLOR,
+      color: BOARD_BACKGROUND,
       text: board.title,
       textBlock: tb,
     };
@@ -360,9 +359,6 @@ export const layoutBoard = (board: Board, opts: LayoutOptions): BoardLayout => {
 // ---- color contrast helpers (WCAG 2.1) ----
 
 export type RGB = [number, number, number];
-
-export const compositeOver = (fg: RGB, alpha: number, bg: RGB): RGB =>
-  fg.map((c, i) => c * alpha + bg[i] * (1 - alpha)) as RGB;
 
 const luminance = ([r, g, b]: RGB) => {
   const f = (v: number) => {

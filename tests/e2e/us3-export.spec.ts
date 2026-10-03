@@ -40,12 +40,15 @@ const EXPECTED: [string, number, number][] = [
 ];
 
 for (const [size, w, h] of EXPECTED) {
-  test(`US3: ${size} exports ${w}×${h} with and without the title`, async ({ page }) => {
+  test(`US3: ${size} exports ${w}×${h}, plus a title band above when included`, async ({
+    page,
+  }) => {
     await createBoard(page, `サイズ${size}`, size);
     await fillCell(page, 1, 1, "富士山に登る", "行きたい");
     await closeSheet(page);
     const withTitle = await exportImage(page, true);
-    expect(jpegSize(withTitle.buf)).toEqual({ width: w, height: h });
+    // the band is 11% of the width, added on top of the grid
+    expect(jpegSize(withTitle.buf)).toEqual({ width: w, height: h + Math.round(w * 0.11) });
     expect(withTitle.name).toMatch(new RegExp(`^サイズ${size}-\\d{8}\\.jpg$`));
     const without = await exportImage(page, false);
     expect(jpegSize(without.buf)).toEqual({ width: w, height: h });
@@ -205,21 +208,20 @@ test("US3: a rotated photo is exported rotated, like on screen (#8)", async ({ p
   }
 });
 
-test("US3: the save button appears only when every cell is achieved (FR-013)", async ({ page }) => {
+test("US3: the save button appears once a board has an item, achieved or not (FR-013)", async ({
+  page,
+}) => {
   const saveButton = page.getByRole("button", { name: "画像として保存" });
-  await createBoard(page, "未達成あり", "3×3");
-  await fillCell(page, 1, 1, "海で泳ぐ");
-  await page.getByLabel("ライブラリから選ぶ").setInputFiles(fixturePath("landscape.jpg"));
-  await expect(page.getByRole("button", { name: "表示範囲を調整" })).toBeVisible();
-  await closeSheet(page);
-  await expect(page.getByText("1/9 達成")).toBeVisible();
-  await expect(saveButton).toHaveCount(0);
+  await createBoard(page, "やりたいこと", "3×3");
+  await expect(saveButton).toHaveCount(0); // nothing to share yet
 
-  const photo = readFileSync(fixturePath("landscape.jpg"));
-  const boardId = await seedFullBoard(page, "全達成", 3, 3, photo);
-  await page.goto(`./#/boards/${boardId}`);
-  await expect(page.getByText("9/9 達成")).toBeVisible();
+  await fillCell(page, 1, 1, "海で泳ぐ");
+  await closeSheet(page);
+  await expect(page.getByText("0/9 達成")).toBeVisible();
   await expect(saveButton).toBeVisible();
+  await saveButton.click();
+  await expect(page.getByRole("heading", { level: 1, name: "画像として保存" })).toBeVisible();
+  await expect(page.locator("img.export-preview")).toBeVisible();
 });
 
 test("US3: a 5×5 board with 25 photos is exported within 5 seconds (SC-003)", async ({ page }) => {
@@ -237,6 +239,7 @@ test("US3: a 5×5 board with 25 photos is exported within 5 seconds (SC-003)", a
     page.getByRole("button", { name: "画像を保存・共有" }).click(),
   ]);
   const elapsed = Date.now() - start;
-  expect(jpegSize(readFileSync((await download.path())!))).toEqual({ width: 2400, height: 2400 });
+  // the title is on by default: 2400 + a band of 11% of the width
+  expect(jpegSize(readFileSync((await download.path())!))).toEqual({ width: 2400, height: 2664 });
   expect(elapsed).toBeLessThan(5000);
 });

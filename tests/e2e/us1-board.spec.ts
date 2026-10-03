@@ -9,7 +9,7 @@ test("US1: create a 3×4 board, write items, and keep them after reload", async 
     "ボードを作る",
     "マスにやりたいことを書く",
     "達成したら写真を貼る",
-    "全マス達成したら一枚の画像として保存・共有する",
+    "一枚の画像として保存・共有する",
   ]);
   await page.getByRole("button", { name: "最初のボードを作る" }).click();
   await expect(page.getByRole("heading", { name: "新しいボード" })).toBeVisible();

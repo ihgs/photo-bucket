@@ -30,10 +30,7 @@ export const closeSheet = async (page: Page) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 };
 
-/**
- * Opens the export screen of the board currently shown. The "画像として保存" button only appears
- * once every cell is achieved (FR-013), so tests that export a partial board go there directly.
- */
+/** Opens the export screen of the board currently shown, without going through its button. */
 export const openExport = async (page: Page) => {
   await page.evaluate(() => {
     location.hash = `${location.hash.replace(/\/$/, "")}/export`;
