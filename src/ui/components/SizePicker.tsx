@@ -7,9 +7,12 @@ const shapeName = (s: GridSize) =>
 export const SizePicker = ({
   value,
   onChange,
+  disabled = false,
 }: {
   value: GridSize;
   onChange: (s: GridSize) => void;
+  /** Locked, e.g. while a template decides the size (005 FR-005). */
+  disabled?: boolean;
 }) => (
   <div class="size-options" role="radiogroup" aria-label="マス目のサイズ">
     {GRID_SIZES.map((s) => {
@@ -20,8 +23,11 @@ export const SizePicker = ({
           type="button"
           role="radio"
           aria-checked={checked}
+          aria-disabled={disabled || undefined}
           class="size-option"
-          onClick={() => onChange(s)}
+          onClick={() => {
+            if (!disabled) onChange(s);
+          }}
         >
           <span
             class="size-preview"

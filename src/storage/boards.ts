@@ -1,4 +1,4 @@
-import type { Board, GridSize, Photo } from "../domain/types";
+import type { Board, Cell, GridSize, Photo } from "../domain/types";
 import { normalizeBoardTitle } from "../domain/validation";
 import { forgetExportInTx } from "../backup/exportLog";
 import { getDb, withQuotaGuard } from "./db";
@@ -15,14 +15,15 @@ const nextStamp = () => {
   return stamp;
 };
 
-export const createBoard = (title: string, size: GridSize) =>
+/** Creates a board, optionally with its first cells (e.g. from a template), in one save. */
+export const createBoard = (title: string, size: GridSize, cells: readonly Cell[] = []) =>
   withQuotaGuard(async () => {
     const stamp = nextStamp();
     const board: Board = {
       id: crypto.randomUUID(),
       title: normalizeBoardTitle(title),
       size: { cols: size.cols, rows: size.rows },
-      cells: [],
+      cells: [...cells],
       createdAt: stamp,
       updatedAt: stamp,
     };

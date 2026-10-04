@@ -712,3 +712,62 @@ label.btn[aria-disabled="true"] {
   padding-top: 8px;
   margin-bottom: 8px;
 }
+
+/* ---- board templates (005, contracts/new-board-templates.md) ---- */
+h2.field-label,
+h3.field-label {
+  margin: 0 0 6px;
+}
+.template-options {
+  display: grid;
+  gap: 8px;
+}
+.template-option {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 10px 12px;
+  min-height: 44px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.template-option[aria-checked="true"] {
+  border-color: var(--primary);
+  background: #fff3ea;
+}
+.template-option small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+.template-size {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.template-preview {
+  margin-top: 12px;
+}
+.template-preview ol {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.template-preview li {
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.size-option[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
