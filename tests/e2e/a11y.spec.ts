@@ -128,3 +128,12 @@ test("no serious accessibility violations with the install banner", async ({
   await check(p, "install banner (iPhone)");
   await iphone.close();
 });
+
+test("no serious accessibility violations on the new board screen with a template", async ({
+  page,
+}) => {
+  await page.goto("./#/new");
+  await page.getByRole("radio", { name: /^一年の目標/ }).click();
+  await expect(page.getByRole("region", { name: "入る項目" })).toBeVisible();
+  await check(page, "new board (template)");
+});

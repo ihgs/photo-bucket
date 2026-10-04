@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { upsertCell } from "../../src/domain/grid";
 import { estimateBackupSize, exportBackup } from "../../src/backup/exportBackup";
+import { TEMPLATES, cellsFromTemplate } from "../../src/domain/templates";
 import { getExportLog } from "../../src/backup/exportLog";
 import * as shareImage from "../../src/media/shareImage";
 import { runExport } from "../../src/ui/backupActions";
@@ -165,5 +166,20 @@ describe("export size and record (FR-012, FR-019, SC-007)", () => {
     await expect(exportBackup([a.id])).rejects.toThrow(
       "『縦長』の写真を読み込めなかったため、書き出しを中止しました",
     );
+  });
+
+  it("restores a board made from a template like any board (005 FR-007)", async () => {
+    const t = TEMPLATES.find((x) => x.id === "seasons")!;
+    const b = await createBoard("季節の楽しみ", t.size, cellsFromTemplate(t));
+    const file = (await exportBackup([b.id])).blob;
+    const manifest = JSON.parse(
+      new TextDecoder().decode(await (await readZip(file)).read("backup.json")),
+    );
+    expect(Object.keys(manifest.boards[0]).sort()).toEqual(
+      ["cells", "createdAt", "id", "size", "title", "updatedAt"].sort(),
+    );
+    await resetDbForTests();
+    await restore(file, "replace");
+    expect(await getBoard(b.id)).toEqual(b);
   });
 });

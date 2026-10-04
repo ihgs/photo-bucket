@@ -67,4 +67,14 @@ describe("board storage", () => {
     await deleteBoard(a.id);
     expect(await getExportLog()).toEqual({ [b.id]: "2026-09-01T00:00:00.000Z" });
   });
+
+  it("creates a board with its first cells in one save (005)", async () => {
+    const cells = [
+      { id: "c1", row: 0, col: 0, title: "北海道旅行", category: "go" as const, memo: "" },
+      { id: "c2", row: 3, col: 2, title: "沖縄旅行", category: "go" as const, memo: "" },
+    ];
+    const b = await createBoard("国内旅行", { cols: 3, rows: 4 }, cells);
+    expect((await getBoard(b.id))?.cells).toEqual(cells);
+    expect((await createBoard("空", { cols: 3, rows: 3 })).cells).toEqual([]);
+  });
 });
