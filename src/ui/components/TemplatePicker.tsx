@@ -1,56 +1,91 @@
+import { useEffect, useRef } from "preact/hooks";
 import { gridLabel } from "../../domain/grid";
-import { TEMPLATES, findTemplate } from "../../domain/templates";
+import { TEMPLATES, type BoardTemplate } from "../../domain/templates";
 
-interface Props {
-  /** The chosen template's id, or null for an empty board. */
+/** Sheet listing the templates; choosing one closes it (contracts/new-board-templates.md). */
+export const TemplateSheet = ({
+  value,
+  onChoose,
+  onClose,
+}: {
+  /** The chosen template's id, or null. */
   value: string | null;
-  onChange: (id: string | null) => void;
-}
+  onChoose: (id: string) => void;
+  onClose: () => void;
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const restore = document.activeElement as HTMLElement | null;
+    ref.current?.querySelector<HTMLButtonElement>(".template-option")?.focus();
+    return () => restore?.focus?.();
+  }, []);
 
-/** Chooses a template for a new board and previews its items (contracts/new-board-templates.md). */
-export const TemplatePicker = ({ value, onChange }: Props) => {
-  const chosen = findTemplate(value);
-  const option = (id: string | null, name: string, detail?: [string, string]) => (
-    <button
-      key={id ?? "none"}
-      type="button"
-      role="radio"
-      aria-checked={value === id}
-      class="template-option"
-      onClick={() => onChange(id)}
-    >
-      <strong>{name}</strong>
-      {detail && (
-        <>
-          <span class="template-size">{detail[0]}</span>
-          <small>{detail[1]}</small>
-        </>
-      )}
-    </button>
-  );
   return (
-    <div class="field">
-      <h2 id="template-heading" class="field-label">
-        テンプレート
-      </h2>
-      <div class="template-options" role="radiogroup" aria-labelledby="template-heading">
-        {option(null, "使わない（空のボード）")}
-        {TEMPLATES.map((t) => option(t.id, t.name, [gridLabel(t.size), t.description]))}
-      </div>
-      {chosen && (
-        <section class="template-preview" aria-labelledby="template-preview-heading">
-          <h3 id="template-preview-heading" class="field-label">
-            入る項目
-          </h3>
-          <ol style={{ gridTemplateColumns: `repeat(${chosen.size.cols}, 1fr)` }}>
-            {[...chosen.items]
-              .sort((a, b) => a.row - b.row || a.col - b.col)
-              .map((i) => (
-                <li key={`${i.row}-${i.col}`}>{i.title}</li>
-              ))}
-          </ol>
-        </section>
-      )}
+    <div class="modal-backdrop" onClick={onClose}>
+      <section
+        ref={ref}
+        class="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="template-sheet-title"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.key === "Escape" && onClose()}
+      >
+        <div class="top-bar">
+          <h2 id="template-sheet-title" style={{ flex: 1, margin: 0 }}>
+            テンプレートを選ぶ
+          </h2>
+          <button type="button" class="btn" onClick={onClose}>
+            閉じる
+          </button>
+        </div>
+        <ul class="template-options">
+          {TEMPLATES.map((t) => (
+            <li key={t.id}>
+              <button
+                type="button"
+                class="template-option"
+                aria-current={value === t.id || undefined}
+                onClick={() => onChoose(t.id)}
+              >
+                <strong>{t.name}</strong>
+                <span class="template-size">{gridLabel(t.size)}</span>
+                <small>{t.description}</small>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 };
+
+/** The chosen template and the items it will put in, laid out like the grid. */
+export const TemplatePreview = ({
+  template,
+  onClear,
+}: {
+  template: BoardTemplate;
+  onClear: () => void;
+}) => (
+  <section class="field template-preview" aria-labelledby="template-preview-heading">
+    <div class="template-chosen">
+      <span>
+        テンプレート: <strong>{template.name}</strong>
+      </span>
+      <button type="button" class="btn" onClick={onClear}>
+        やめる
+      </button>
+    </div>
+    <h2 id="template-preview-heading" class="field-label">
+      入る項目
+    </h2>
+    <ol style={{ gridTemplateColumns: `repeat(${template.size.cols}, 1fr)` }}>
+      {[...template.items]
+        .sort((a, b) => a.row - b.row || a.col - b.col)
+        .map((i) => (
+          <li key={`${i.row}-${i.col}`}>{i.title}</li>
+        ))}
+    </ol>
+  </section>
+);
