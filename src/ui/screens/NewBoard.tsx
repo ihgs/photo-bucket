@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-preact";
+import { ArrowLeft, LayoutGrid } from "lucide-preact";
 import { useState } from "preact/hooks";
 import { navigate } from "../../app/router";
 import { reportError } from "../../app/errors";
@@ -7,7 +7,7 @@ import type { GridSize } from "../../domain/types";
 import { BOARD_TITLE_MAX, UNTITLED_BOARD } from "../../domain/validation";
 import { createBoard } from "../../storage/boards";
 import { SizePicker } from "../components/SizePicker";
-import { TemplatePicker } from "../components/TemplatePicker";
+import { TemplatePreview, TemplateSheet } from "../components/TemplatePicker";
 import { cellsFromTemplate, findTemplate, resolveTemplateTitle } from "../../domain/templates";
 import { openBoard } from "../state/boardStore";
 import { IconButton } from "../components/IconButton";
@@ -19,6 +19,7 @@ export const NewBoard = () => {
   // What the user had typed before choosing a template, restored when they go back to none.
   const [manual, setManual] = useState<{ title: string; size: GridSize } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   const chooseTemplate = (id: string | null) => {
     const t = findTemplate(id);
@@ -50,13 +51,19 @@ export const NewBoard = () => {
     }
   };
 
+  const template = findTemplate(templateId);
+
   return (
     <form onSubmit={submit}>
       <div class="top-bar">
         <IconButton icon={ArrowLeft} label="戻る" onClick={() => navigate({ name: "list" })} />
         <h1>新しいボード</h1>
+        <button type="button" class="btn" onClick={() => setPicking(true)}>
+          <LayoutGrid size={18} aria-hidden="true" />
+          テンプレート
+        </button>
       </div>
-      <TemplatePicker value={templateId} onChange={chooseTemplate} />
+      {template && <TemplatePreview template={template} onClear={() => chooseTemplate(null)} />}
       <label class="field">
         <span class="field-label">タイトル</span>
         <input
@@ -75,6 +82,16 @@ export const NewBoard = () => {
       <button type="submit" class="btn btn-primary btn-block" disabled={busy}>
         ボードを作る
       </button>
+      {picking && (
+        <TemplateSheet
+          value={templateId}
+          onChoose={(id) => {
+            chooseTemplate(id);
+            setPicking(false);
+          }}
+          onClose={() => setPicking(false)}
+        />
+      )}
     </form>
   );
 };

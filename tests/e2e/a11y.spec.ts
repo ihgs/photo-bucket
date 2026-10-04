@@ -133,7 +133,10 @@ test("no serious accessibility violations on the new board screen with a templat
   page,
 }) => {
   await page.goto("./#/new");
-  await page.getByRole("radio", { name: /^一年の目標/ }).click();
+  await page.getByRole("button", { name: "テンプレート", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "テンプレートを選ぶ" })).toBeVisible();
+  await check(page, "template sheet");
+  await page.getByRole("button", { name: /^一年の目標/ }).click();
   await expect(page.getByRole("region", { name: "入る項目" })).toBeVisible();
   await check(page, "new board (template)");
 });

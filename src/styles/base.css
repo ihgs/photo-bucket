@@ -714,13 +714,18 @@ label.btn[aria-disabled="true"] {
 }
 
 /* ---- board templates (005, contracts/new-board-templates.md) ---- */
-h2.field-label,
-h3.field-label {
+h2.field-label {
   margin: 0 0 6px;
 }
 .template-options {
   display: grid;
   gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.template-option {
+  width: 100%;
 }
 .template-option {
   display: grid;
@@ -736,7 +741,7 @@ h3.field-label {
   text-align: left;
   cursor: pointer;
 }
-.template-option[aria-checked="true"] {
+.template-option[aria-current="true"] {
   border-color: var(--primary);
   background: #fff3ea;
 }
@@ -748,8 +753,12 @@ h3.field-label {
   color: var(--muted);
   font-size: 0.85rem;
 }
-.template-preview {
-  margin-top: 12px;
+.template-chosen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 .template-preview ol {
   display: grid;
