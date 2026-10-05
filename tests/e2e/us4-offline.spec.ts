@@ -12,11 +12,13 @@ import {
 test.skip(({ browserName }) => browserName !== "chromium", "Chromium only");
 
 test("US4: the manifest is served under the sub path", async ({ request }) => {
-  const res = await request.get("manifest.webmanifest");
+  const res = await request.get("../manifest.webmanifest");
   expect(res.ok()).toBe(true);
   const manifest = await res.json();
-  expect(manifest.start_url).toBe("/photo-bucket/");
-  expect(manifest.scope).toBe("/photo-bucket/");
+  // The id stays at the old start_url so installs made before the app moved to app/ keep working.
+  expect(manifest.id).toBe("/photo-bucket/");
+  expect(manifest.start_url).toBe("/photo-bucket/app/");
+  expect(manifest.scope).toBe("/photo-bucket/app/");
   expect(manifest.display).toBe("standalone");
   expect(manifest.lang).toBe("ja");
   expect(manifest.icons.map((i: { sizes: string }) => i.sizes)).toEqual(

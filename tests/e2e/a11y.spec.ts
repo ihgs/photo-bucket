@@ -24,6 +24,9 @@ test.skip(({ browserName }) => browserName !== "chromium", "Chromium only");
 
 test("no serious accessibility violations on any screen", async ({ page }) => {
   await disableWebShare(page);
+  await page.goto("../");
+  await check(page, "top page");
+
   await page.goto("./");
   await expect(page.getByRole("button", { name: "最初のボードを作る" })).toBeVisible();
   await check(page, "empty list");

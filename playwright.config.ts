@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: "http://localhost:4173/photo-bucket/",
+    baseURL: "http://localhost:4173/photo-bucket/app/",
     trace: "retain-on-failure",
   },
   webServer: {
