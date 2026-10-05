@@ -8,6 +8,9 @@
 - 保存画像はボードと同じ縦横比（1:1・縦 3:4・横 4:3）ちょうどで、長辺 2400px です。
 - 対象ブラウザ: 最新の iOS Safari、Android Chrome、デスクトップの Chrome・Edge・Safari（Firefox は対象外）。
 
+公開 URL のトップ（`/photo-bucket/`）は紹介ページ（`index.html`）で、アプリ本体は `/photo-bucket/app/`（`app/index.html`）です。
+ホーム画面に追加されるのはアプリ本体だけで、追加したアプリからは紹介ページは表示されません。
+
 仕様と設計は [specs/001-photo-bucket-list/](specs/001-photo-bucket-list/) にあります。
 
 ## 開発
@@ -19,7 +22,7 @@ npm run lint       # 型チェック + ESLint
 npm test           # 単体・結合テスト（Vitest）
 npm run test:e2e   # E2E（Playwright。初回は npx playwright install --with-deps chromium webkit）
 npm run build      # 本番ビルド（dist/）
-npm run preview    # 本番ビルドを /photo-bucket/ で配信
+npm run preview    # 本番ビルドを /photo-bucket/ で配信（アプリは /photo-bucket/app/）
 ```
 
 動作確認の手順は [quickstart.md](specs/001-photo-bucket-list/quickstart.md) を参照してください。
@@ -35,4 +38,4 @@ npm run preview    # 本番ビルドを /photo-bucket/ で配信
 公開 URL のパスが変わるため、次の 2 か所を `/<リポジトリ名>/` に変えてください。
 
 - `.github/workflows/deploy.yml` の `BASE_PATH`
-- `package.json` の `preview` スクリプトの `--base`（E2E が使う `playwright.config.ts` の `baseURL` も同様）
+- `package.json` の `preview` スクリプトの `--base`（E2E が使う `playwright.config.ts` の `baseURL` と `webServer.url` も同様。`baseURL` は `/<リポジトリ名>/app/`）

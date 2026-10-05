@@ -1,11 +1,11 @@
-// Fails when the JavaScript loaded on first visit exceeds 60 KB gzip (plan.md Constraints).
+// Fails when the JavaScript the app loads on first visit exceeds 60 KB gzip (plan.md Constraints).
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { join } from "node:path";
 
 const LIMIT = 60 * 1024;
 const dist = "dist";
-const html = readFileSync(join(dist, "index.html"), "utf8");
+const html = readFileSync(join(dist, "app", "index.html"), "utf8");
 const scripts = [
   ...html.matchAll(/<script[^>]+src="([^"]+)"/g),
   ...html.matchAll(/<link[^>]+rel="modulepreload"[^>]+href="([^"]+)"/g),
@@ -19,7 +19,7 @@ for (const file of new Set(scripts)) {
 }
 console.log(`total: ${(total / 1024).toFixed(1)} KB gzip (limit ${LIMIT / 1024} KB)`);
 if (total === 0) {
-  console.error("no scripts found in dist/index.html");
+  console.error("no scripts found in dist/app/index.html");
   process.exit(1);
 }
 if (total > LIMIT) process.exit(1);

@@ -3,18 +3,272 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="写真で残すバケットリスト" />
+    <script>
+      // Installs made before the app moved to app/ still start here: open the app instead.
+      if (matchMedia("(display-mode: standalone)").matches || navigator.standalone === true) {
+        location.replace("app/" + location.hash);
+      }
+    </script>
+    <meta
+      name="description"
+      content="やりたいことをマス目に書いて、達成したら写真を貼る。写真で残すバケットリストです。"
+    />
     <meta name="theme-color" content="#b4531f" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="フォトバケット" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-    <title>フォトバケットリスト</title>
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>フォトバケットリスト ― 写真で残すバケットリスト</title>
+    <style>
+      :root {
+        --bg: #fbf8f3;
+        --surface: #ffffff;
+        --board: #f4efe6;
+        --text: #1f2328;
+        --muted: #57606a;
+        --line: #d8d2c6;
+        --primary: #b4531f;
+        --primary-text: #ffffff;
+        --focus: #1d4ed8;
+        --radius: 12px;
+        --font:
+          system-ui, -apple-system, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+          "Yu Gothic UI", Meiryo, sans-serif;
+        color-scheme: light;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 16px;
+        line-height: 1.7;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+          env(safe-area-inset-left);
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 32px 20px 64px;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.3;
+        margin: 0 0 12px;
+      }
+      h1 {
+        font-size: 1.9rem;
+      }
+      h2 {
+        font-size: 1.3rem;
+        margin-top: 48px;
+      }
+      h3 {
+        font-size: 1.05rem;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      a:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 24px;
+      }
+      .brand img {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+      }
+      .lead {
+        font-size: 1.1rem;
+        color: var(--muted);
+      }
+      .cta {
+        display: inline-block;
+        margin: 12px 0 4px;
+        padding: 14px 28px;
+        border-radius: 999px;
+        background: var(--primary);
+        color: var(--primary-text);
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-decoration: none;
+      }
+      .note {
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+      .demo {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        max-width: 320px;
+        margin: 32px auto 0;
+        padding: 10px;
+        background: var(--board);
+        border-radius: var(--radius);
+      }
+      .demo span {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: flex-end;
+        padding: 6px;
+        border-radius: 8px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        font-size: 0.75rem;
+        line-height: 1.3;
+      }
+      .demo .done {
+        color: #fff;
+        border: 0;
+        text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+      }
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+        padding: 0;
+        list-style: none;
+      }
+      .features li {
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+      .features p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      ol.steps {
+        padding-left: 1.4em;
+      }
+      ol.steps li {
+        margin-bottom: 8px;
+      }
+      .install {
+        padding: 16px 20px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+      }
+      .install ul {
+        margin: 0;
+        padding-left: 1.2em;
+      }
+      .center {
+        text-align: center;
+      }
+      footer {
+        margin-top: 48px;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <main>
+      <div class="brand">
+        <img src="/icons/icon-192.png" alt="" width="36" height="36" />
+        フォトバケットリスト
+      </div>
+
+      <h1>やりたいことを、<br />写真で埋めていこう。</h1>
+      <p class="lead">
+        やりたいこと・行きたいところ・食べたいものをマス目に書いて、達成したら写真を貼る。
+        全部のマスが写真で埋まるころには、一年の思い出が一枚のボードになります。
+      </p>
+      <a class="cta" href="app/">はじめる（無料）</a>
+      <p class="note">登録不要。ブラウザですぐ使えます。</p>
+
+      <div class="demo" aria-hidden="true">
+        <span class="done" style="background: linear-gradient(135deg, #5b8fb9, #2f5d80)"
+          >海で泳ぐ</span
+        >
+        <span>富士山に登る</span>
+        <span class="done" style="background: linear-gradient(135deg, #d9a05b, #a0612b)">
+          ご当地ラーメン
+        </span>
+        <span>キャンプする</span>
+        <span class="done" style="background: linear-gradient(135deg, #8cb369, #4f7a3a)">
+          紅葉を見に行く
+        </span>
+        <span>温泉に行く</span>
+        <span>花火大会</span>
+        <span class="done" style="background: linear-gradient(135deg, #c97c9a, #8a3f5f)">
+          桜を見る
+        </span>
+        <span>星空を撮る</span>
+      </div>
+
+      <h2>できること</h2>
+      <ul class="features">
+        <li>
+          <h3>マス目に書き出す</h3>
+          <p>
+            3×3・4×4・5×5・3×4・4×3 から選べます。「国内旅行」などのテンプレートからも始められます。
+          </p>
+        </li>
+        <li>
+          <h3>達成したら写真を貼る</h3>
+          <p>撮った写真をマスに貼って、表示範囲も調整できます。</p>
+        </li>
+        <li>
+          <h3>一枚の画像で保存・共有</h3>
+          <p>ボード全体を一枚の画像にして、保存したり SNS で共有したりできます。</p>
+        </li>
+        <li>
+          <h3>データは端末の中だけ</h3>
+          <p>
+            書いた項目も写真も外部には送信されません。バックアップファイルで引っ越しもできます。
+          </p>
+        </li>
+      </ul>
+
+      <h2>使い方</h2>
+      <ol class="steps">
+        <li>ボードを作って、マスにやりたいことを書き込みます。</li>
+        <li>達成したらマスを開いて、そのときの写真を貼ります。</li>
+        <li>ボードを画像にして、保存・共有します。</li>
+      </ol>
+
+      <h2>ホーム画面に追加して使う</h2>
+      <div class="install">
+        <p>
+          ホーム画面に追加するとアプリのように起動でき、一度開いたあとは通信なしでもすべての機能が使えます。
+          アプリを開いてから追加してください。
+        </p>
+        <ul>
+          <li>iPhone・iPad（Safari）: 共有ボタン →「ホーム画面に追加」</li>
+          <li>Android（Chrome）: アプリ内の案内、またはメニュー →「ホーム画面に追加」</li>
+        </ul>
+      </div>
+
+      <p class="center">
+        <a class="cta" href="app/">アプリを開く</a>
+      </p>
+
+      <footer>
+        対応ブラウザ: 最新の iOS Safari・Android Chrome・パソコンの Chrome / Edge / Safari
+      </footer>
+    </main>
   </body>
 </html>
