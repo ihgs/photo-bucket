@@ -96,7 +96,7 @@ export const BoardList = () => {
     return (
       <div class="empty-state">
         <InstallBanner hasBoards={false} />
-        <h1>フォトバケットリスト</h1>
+        <h1>バケットグリッド</h1>
         <p class="muted">やりたいことをマス目に書いて、達成したら写真を貼りましょう。</p>
         <section class="usage" aria-labelledby="usage-heading">
           <h2 id="usage-heading">使い方</h2>
@@ -122,7 +122,7 @@ export const BoardList = () => {
     <>
       <InstallBanner hasBoards />
       <div class="top-bar">
-        <h1>フォトバケットリスト</h1>
+        <h1>バケットグリッド</h1>
         <button type="button" class="btn btn-primary" onClick={() => navigate({ name: "new" })}>
           ＋ 新しいボード
         </button>

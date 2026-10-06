@@ -42,8 +42,8 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: "フォトバケットリスト",
-        short_name: "フォトバケット",
+        name: "バケットグリッド",
+        short_name: "バケットグリッド",
         description: "やりたいことをマス目に書いて、達成したら写真を貼るバケットリスト",
         lang: "ja",
         display: "standalone",

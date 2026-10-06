@@ -13,7 +13,7 @@ test("SC-006: a board with 25 photos is shown within 2 seconds even with 3 such 
   await page.goto("./#/");
   await page
     .getByRole("button", { name: "ボード一覧へ" })
-    .or(page.getByRole("heading", { name: "フォトバケットリスト" }))
+    .or(page.getByRole("heading", { name: "バケットグリッド" }))
     .first()
     .waitFor();
   const start = Date.now();
