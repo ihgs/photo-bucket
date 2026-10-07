@@ -16,8 +16,10 @@ export interface BoardTemplate {
   title: string;
   description: string;
   size: GridSize;
-  /** Exactly one item per cell. */
+  /** One item per cell at most. The templates built into the app fill every cell. */
   items: TemplateItem[];
+  /** Read from outside with parseTemplate (specs/006-template-import), not built in. */
+  imported?: true;
 }
 
 type Row = readonly (readonly [string, Category])[];

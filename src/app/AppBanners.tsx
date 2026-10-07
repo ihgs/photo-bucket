@@ -1,7 +1,8 @@
 import { signal } from "@preact/signals";
 import { updateAvailable, updateNow } from "../pwa/registerSW";
 
-const online = signal(typeof navigator === "undefined" ? true : navigator.onLine);
+/** Whether the browser reports a network connection. */
+export const online = signal(typeof navigator === "undefined" ? true : navigator.onLine);
 if (typeof window !== "undefined") {
   window.addEventListener("online", () => (online.value = true));
   window.addEventListener("offline", () => (online.value = false));

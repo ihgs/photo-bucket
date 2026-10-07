@@ -8,41 +8,45 @@ import { BOARD_TITLE_MAX, UNTITLED_BOARD } from "../../domain/validation";
 import { createBoard } from "../../storage/boards";
 import { SizePicker } from "../components/SizePicker";
 import { TemplatePreview, TemplateSheet } from "../components/TemplatePicker";
-import { cellsFromTemplate, findTemplate, resolveTemplateTitle } from "../../domain/templates";
+import {
+  cellsFromTemplate,
+  findTemplate,
+  resolveTemplateTitle,
+  type BoardTemplate,
+} from "../../domain/templates";
 import { openBoard } from "../state/boardStore";
 import { IconButton } from "../components/IconButton";
 
 export const NewBoard = () => {
   const [title, setTitle] = useState("");
   const [size, setSize] = useState<GridSize>(DEFAULT_GRID_SIZE);
-  const [templateId, setTemplateId] = useState<string | null>(null);
+  // A built-in template or one imported from outside; imported ones live only here (FR-010).
+  const [template, setTemplate] = useState<BoardTemplate | null>(null);
   // What the user had typed before choosing a template, restored when they go back to none.
   const [manual, setManual] = useState<{ title: string; size: GridSize } | null>(null);
   const [busy, setBusy] = useState(false);
   const [picking, setPicking] = useState(false);
 
-  const chooseTemplate = (id: string | null) => {
-    const t = findTemplate(id);
+  const chooseTemplate = (t: BoardTemplate | null) => {
     if (!t) {
       if (manual) {
         setTitle(manual.title);
         setSize(manual.size);
       }
-      setTemplateId(null);
+      setTemplate(null);
       return;
     }
-    if (templateId === null) setManual({ title, size });
+    if (template === null) setManual({ title, size });
     setTitle(resolveTemplateTitle(t.title));
     setSize(t.size);
-    setTemplateId(t.id);
+    setTemplate(t);
   };
 
   const submit = async (e: Event) => {
     e.preventDefault();
     setBusy(true);
     try {
-      const t = findTemplate(templateId);
-      const board = await createBoard(title, size, t ? cellsFromTemplate(t) : []);
+      const board = await createBoard(title, size, template ? cellsFromTemplate(template) : []);
       await openBoard(board.id);
       navigate({ name: "board", boardId: board.id }, { replace: true });
     } catch (err) {
@@ -50,8 +54,6 @@ export const NewBoard = () => {
       setBusy(false);
     }
   };
-
-  const template = findTemplate(templateId);
 
   return (
     <form onSubmit={submit}>
@@ -77,16 +79,20 @@ export const NewBoard = () => {
       </label>
       <fieldset class="field" style={{ border: "none", padding: 0, margin: "0 0 24px" }}>
         <legend class="field-label">マス目のサイズ</legend>
-        <SizePicker value={size} onChange={setSize} disabled={templateId !== null} />
+        <SizePicker value={size} onChange={setSize} disabled={template !== null} />
       </fieldset>
       <button type="submit" class="btn btn-primary btn-block" disabled={busy}>
         ボードを作る
       </button>
       {picking && (
         <TemplateSheet
-          value={templateId}
+          value={template?.id ?? null}
           onChoose={(id) => {
-            chooseTemplate(id);
+            chooseTemplate(findTemplate(id));
+            setPicking(false);
+          }}
+          onImported={(t) => {
+            chooseTemplate(t);
             setPicking(false);
           }}
           onClose={() => setPicking(false)}
