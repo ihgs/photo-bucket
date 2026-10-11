@@ -143,3 +143,15 @@ test("no serious accessibility violations on the new board screen with a templat
   await expect(page.getByRole("region", { name: "入る項目" })).toBeVisible();
   await check(page, "new board (template)");
 });
+
+test("no serious accessibility violations on the template import screen", async ({ page }) => {
+  await page.goto("./#/new");
+  await page.getByRole("button", { name: "テンプレート", exact: true }).click();
+  await page.getByRole("button", { name: "テンプレートを取り込む" }).click();
+  await expect(page.getByRole("dialog", { name: "テンプレートを取り込む" })).toBeVisible();
+  await check(page, "template import");
+  await page.getByLabel("テンプレートの中身").fill('{"format":"bucket-grid-template","version":1}');
+  await page.getByRole("button", { name: "取り込む", exact: true }).click();
+  await expect(page.getByRole("alert")).toBeVisible();
+  await check(page, "template import (errors)");
+});

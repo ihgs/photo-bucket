@@ -139,6 +139,7 @@ label.field {
   margin-top: 4px;
 }
 input[type="text"],
+input[type="url"],
 textarea {
   width: 100%;
   min-height: 44px;
@@ -779,4 +780,52 @@ h2.field-label {
 .size-option[aria-disabled="true"] {
   opacity: 0.55;
   cursor: not-allowed;
+}
+.template-preview li.empty {
+  color: var(--muted);
+  background: transparent;
+  border-style: dashed;
+}
+.template-import-open {
+  width: 100%;
+  margin-top: 12px;
+}
+.template-import-part {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+}
+.template-import-part h3 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+.template-import-part .field {
+  margin-bottom: 8px;
+}
+.template-import textarea {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+.template-import-errors {
+  margin: 12px 0 0;
+  padding: 10px 12px 10px 28px;
+  color: var(--danger);
+  background: #fdecea;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.template-import-help {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+}
+.template-import-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.template-chosen .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
