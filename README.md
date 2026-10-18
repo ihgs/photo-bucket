@@ -83,6 +83,17 @@ npm run preview    # 本番ビルドを /photo-bucket/ で配信（アプリは 
 2. `main` ブランチに push すると、`.github/workflows/deploy.yml` が lint・テスト・E2E・ビルドを行い、
    `https://<user>.github.io/photo-bucket/` に公開します。
 
+### Google アナリティクス（紹介ページだけ）
+
+紹介ページ（`index.html`）にだけ Google アナリティクス（GA4）を入れられます。アプリ本体（`app/`）には入りません（憲章 I）。
+
+1. GA4 のプロパティを作り、ウェブストリームの測定 ID（`G-XXXXXXXXXX`）を控えます。
+2. リポジトリの **Settings → Secrets and variables → Actions → Variables** に、`GA_MEASUREMENT_ID` という名前で測定 ID を登録します。
+3. 次のデプロイから、紹介ページにタグと「Google アナリティクスを使っています」の表示が入ります。
+   「はじめる」「アプリを開く」の押下は `open_app` イベントとして記録されます。
+
+変数がないときは、タグを入れずにビルドします。ホーム画面に追加したアプリとして開いたときも計測しません。
+
 ### リポジトリ名が `photo-bucket` でない場合
 
 公開 URL のパスが変わるため、次の 2 か所を `/<リポジトリ名>/` に変えてください。
