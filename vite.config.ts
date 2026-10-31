@@ -3,6 +3,7 @@ import { defineConfig, type Plugin } from "vite";
 import preact from "@preact/preset-vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { fileURLToPath } from "node:url";
+import { landingAnalytics } from "./scripts/landingAnalytics";
 
 const base = process.env.BASE_PATH ?? "/photo-bucket/";
 
@@ -67,6 +68,7 @@ export default defineConfig({
       },
     }),
     landingWithoutManifest(),
+    landingAnalytics(process.env.GA_MEASUREMENT_ID || undefined),
   ],
   test: {
     environment: "happy-dom",
